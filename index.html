@@ -12,6 +12,81 @@
       min-height: 100vh; padding: 20px; color: #333;
       overflow-x: hidden;
     }
+
+    /* === PIN LOCK OVERLAY === */
+    .pin-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex; justify-content: center; align-items: center;
+      padding: 20px;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+    .pin-overlay.unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
+    .pin-card {
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+      padding: 40px 35px; border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 420px; width: 100%; text-align: center;
+      border: 2px solid rgba(255,255,255,0.5);
+      animation: pin-enter 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+    @keyframes pin-enter {
+      0% { transform: scale(0.5) translateY(-50px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .pin-icon {
+      width: 80px; height: 80px; margin: 0 auto 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 40px; box-shadow: 0 8px 25px rgba(102,126,234,0.5);
+      animation: icon-pulse 2s ease-in-out infinite;
+    }
+    @keyframes icon-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 8px 25px rgba(102,126,234,0.5); }
+      50% { transform: scale(1.05); box-shadow: 0 12px 35px rgba(102,126,234,0.7); }
+    }
+    .pin-title { font-size: 24px; font-weight: 800; color: #2c3e50; margin-bottom: 8px; }
+    .pin-subtitle { font-size: 13px; color: #7f8c8d; margin-bottom: 25px; }
+    .pin-input-wrapper { position: relative; margin-bottom: 18px; }
+    .pin-input {
+      width: 100%; padding: 16px 50px 16px 20px; font-size: 22px;
+      font-weight: 700; letter-spacing: 8px; text-align: center;
+      border: 2px solid #e0e0e0; border-radius: 14px;
+      outline: none; transition: all 0.3s;
+      font-family: 'Courier New', monospace;
+    }
+    .pin-input:focus { border-color: #667eea; box-shadow: 0 0 0 4px rgba(102,126,234,0.15); }
+    .pin-input.error { border-color: #e74c3c; animation: shake 0.4s; }
+    .pin-input.success { border-color: #27ae60; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    .pin-toggle {
+      position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; font-size: 20px; cursor: pointer;
+      color: #95a5a6; padding: 5px;
+    }
+    .pin-submit {
+      width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; border: none; border-radius: 14px; cursor: pointer;
+      box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+      transition: all 0.3s; margin-bottom: 15px;
+    }
+    .pin-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(102,126,234,0.5); }
+    .pin-submit:active { transform: translateY(0); }
+    .pin-message { font-size: 13px; min-height: 20px; font-weight: 600; margin-bottom: 10px; }
+    .pin-message.error { color: #e74c3c; }
+    .pin-message.success { color: #27ae60; }
+    .pin-hint { font-size: 11px; color: #95a5a6; margin-top: 10px; }
+    .pin-attempts { font-size: 12px; color: #e74c3c; margin-top: 8px; font-weight: 600; }
+    .pin-locked {
+      background: #fff3cd; color: #856404; padding: 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; margin-top: 15px;
+    }
+
     .container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
     
     .app-header {
@@ -184,6 +259,12 @@
 
     @media (max-width: 768px) {
       body { padding: 12px; padding-bottom: 160px; font-size: 16px; }
+      .pin-card { padding: 30px 22px; border-radius: 20px; }
+      .pin-icon { width: 70px; height: 70px; font-size: 34px; margin-bottom: 16px; }
+      .pin-title { font-size: 20px; }
+      .pin-subtitle { font-size: 12px; margin-bottom: 20px; }
+      .pin-input { padding: 14px 45px 14px 18px; font-size: 20px; letter-spacing: 6px; }
+      .pin-submit { padding: 14px; font-size: 15px; }
       .app-header { padding: 20px; margin-bottom: 15px; border-radius: 20px; }
       .app-header h1 { font-size: 22px; line-height: 1.3; }
       .app-header p { font-size: 14px; }
@@ -247,7 +328,36 @@
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- === PIN LOCK OVERLAY === -->
+  <div class="pin-overlay" id="pinOverlay">
+    <div class="pin-card">
+      <div class="pin-icon">🔒</div>
+      <h2 class="pin-title">Akses Terbatas</h2>
+      <p class="pin-subtitle">Masukkan PIN untuk melanjutkan ke Summary Insentif PIC</p>
+      <form id="pinForm" onsubmit="checkPin(event)">
+        <div class="pin-input-wrapper">
+          <input 
+            type="password" 
+            id="pinInput" 
+            class="pin-input" 
+            placeholder="••••" 
+            maxlength="4" 
+            inputmode="numeric"
+            autocomplete="off"
+            autofocus
+          >
+          <button type="button" class="pin-toggle" onclick="togglePinVisibility()" id="pinToggle">👁️</button>
+        </div>
+        <div class="pin-message" id="pinMessage"></div>
+        <button type="submit" class="pin-submit" id="pinSubmit">🔓 Buka Akses</button>
+      </form>
+      <div class="pin-hint">💡 Hubungi admin jika lupa PIN</div>
+      <div class="pin-attempts" id="pinAttempts"></div>
+    </div>
+  </div>
+
+  <div class="container" id="mainContainer">
     <div class="app-header">
       <h1>💰 SUMMARY INSENTIF PIC</h1>
       <p>Rekapitulasi Bukti Transfer PIC</p>
@@ -326,13 +436,139 @@
   <script>
     var appData = null, currentPeriodIdx = 0, idleTimer = null;
 
-    // ⚠️ GANTI DENGAN URL /exec DARI APPS SCRIPT ANDA
-    const URL_API = "https://script.google.com/macros/s/AKfycbxH3ZuUkKe2O_meGKp96gPMtU68fbWaXNeHl77Z27JGLBtMmctv-Y_bQl7EEpK6ChtmvQ/exec";
+    // === PIN CONFIGURATION ===
+    const CORRECT_PIN = "2024";
+    const MAX_ATTEMPTS = 5;
+    const LOCK_DURATION = 60000; // 60 detik lockout
+    const SESSION_KEY = "picAppPinUnlocked";
+    const ATTEMPTS_KEY = "picAppPinAttempts";
+    const LOCK_UNTIL_KEY = "picAppPinLockUntil";
 
-    function formatRupiah(angka) {
-      let clean = String(angka).replace(/[^0-9]/g, '');
-      if (!clean) return "Rp 0";
-      return 'Rp ' + parseInt(clean, 10).toLocaleString('id-ID');
+    // === PIN LOGIC ===
+    function getAttempts() {
+      try {
+        const data = JSON.parse(sessionStorage.getItem(ATTEMPTS_KEY) || '{"count":0,"last":0}');
+        return data;
+      } catch(e) { return {count:0, last:0}; }
+    }
+    function setAttempts(count) {
+      sessionStorage.setItem(ATTEMPTS_KEY, JSON.stringify({count: count, last: Date.now()}));
+    }
+    function isLocked() {
+      const lockUntil = parseInt(sessionStorage.getItem(LOCK_UNTIL_KEY) || "0");
+      return Date.now() < lockUntil;
+    }
+    function getLockRemaining() {
+      const lockUntil = parseInt(sessionStorage.getItem(LOCK_UNTIL_KEY) || "0");
+      return Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+    }
+    function lockAccount() {
+      sessionStorage.setItem(LOCK_UNTIL_KEY, String(Date.now() + LOCK_DURATION));
+      sessionStorage.setItem(ATTEMPTS_KEY, JSON.stringify({count:0, last:Date.now()}));
+    }
+    function updatePinUI() {
+      const attempts = getAttempts();
+      const locked = isLocked();
+      const msgEl = document.getElementById('pinMessage');
+      const attEl = document.getElementById('pinAttempts');
+      const submitBtn = document.getElementById('pinSubmit');
+      const input = document.getElementById('pinInput');
+      
+      if (locked) {
+        const remaining = getLockRemaining();
+        attEl.innerHTML = `🔒 Terlalu banyak percobaan. Coba lagi dalam <strong>${remaining}</strong> detik`;
+        input.disabled = true;
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = "0.5";
+      } else {
+        input.disabled = false;
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = "1";
+        if (attempts.count > 0 && attempts.count < MAX_ATTEMPTS) {
+          attEl.innerHTML = `⚠️ Percobaan salah: ${attempts.count}/${MAX_ATTEMPTS}`;
+        } else {
+          attEl.innerHTML = '';
+        }
+      }
+    }
+    function checkPin(e) {
+      e.preventDefault();
+      if (isLocked()) { updatePinUI(); return; }
+      
+      const input = document.getElementById('pinInput');
+      const msgEl = document.getElementById('pinMessage');
+      const pin = input.value.trim();
+      
+      if (pin === CORRECT_PIN) {
+        msgEl.className = 'pin-message success';
+        msgEl.innerText = '✅ PIN Benar! Membuka akses...';
+        input.classList.remove('error');
+        input.classList.add('success');
+        sessionStorage.setItem(SESSION_KEY, "true");
+        sessionStorage.removeItem(ATTEMPTS_KEY);
+        sessionStorage.removeItem(LOCK_UNTIL_KEY);
+        setTimeout(() => {
+          document.getElementById('pinOverlay').classList.add('unlocked');
+          initApp();
+        }, 700);
+      } else {
+        const attempts = getAttempts();
+        const newCount = attempts.count + 1;
+        setAttempts(newCount);
+        
+        input.classList.add('error');
+        msgEl.className = 'pin-message error';
+        
+        if (newCount >= MAX_ATTEMPTS) {
+          lockAccount();
+          msgEl.innerText = '🚫 PIN salah terlalu sering!';
+          input.value = '';
+          setTimeout(updatePinUI, 100);
+          startLockTimer();
+        } else {
+          msgEl.innerText = `❌ PIN salah! Sisa ${MAX_ATTEMPTS - newCount} percobaan`;
+          input.value = '';
+          input.focus();
+          updatePinUI();
+        }
+        setTimeout(() => input.classList.remove('error'), 500);
+      }
+    }
+    function startLockTimer() {
+      const timer = setInterval(() => {
+        if (!isLocked()) {
+          clearInterval(timer);
+          document.getElementById('pinInput').disabled = false;
+          document.getElementById('pinSubmit').disabled = false;
+          document.getElementById('pinSubmit').style.opacity = "1";
+          document.getElementById('pinAttempts').innerHTML = '';
+          document.getElementById('pinMessage').innerText = '';
+          document.getElementById('pinInput').focus();
+        } else {
+          updatePinUI();
+        }
+      }, 1000);
+    }
+    function togglePinVisibility() {
+      const input = document.getElementById('pinInput');
+      const btn = document.getElementById('pinToggle');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerText = '🙈';
+      } else {
+        input.type = 'password';
+        btn.innerText = '👁️';
+      }
+    }
+    function initPinCheck() {
+      if (sessionStorage.getItem(SESSION_KEY) === "true") {
+        document.getElementById('pinOverlay').classList.add('unlocked');
+        initApp();
+      } else {
+        updatePinUI();
+        if (isLocked()) startLockTimer();
+        document.getElementById('pinInput').focus();
+      }
     }
 
     // === JAM ===
@@ -417,15 +653,28 @@
     function endGame(){gameRunning=false;document.getElementById('finalScore').innerText=score;const hs=parseInt(localStorage.getItem('coinHighScore')||0);if(score>hs){localStorage.setItem('coinHighScore',score);document.getElementById('highScore').innerText=score;triggerConfetti();}else{document.getElementById('highScore').innerText=hs;}document.getElementById('gameOver').classList.add('active');}
     document.addEventListener('DOMContentLoaded',()=>{const c=document.getElementById('gameCanvas');c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();const sx=c.width/r.width;basket.x=Math.max(0,Math.min(c.width-basket.w,(e.clientX-r.left)*sx-basket.w/2));});c.addEventListener('touchmove',e=>{e.preventDefault();const r=c.getBoundingClientRect();const sx=c.width/r.width;basket.x=Math.max(0,Math.min(c.width-basket.w,(e.touches[0].clientX-r.left)*sx-basket.w/2));},{passive:false});});
 
-    // === FETCH DATA DARI API (PENGGANTI google.script.run) ===
-    setStickmanState('loading');
-    fetch(URL_API, { redirect: 'follow' })
-      .then(r => r.json())
-      .then(data => { appData = data; renderSummary(); setStickmanState('idle'); })
-      .catch(err => {
-        document.getElementById('periodList').innerHTML = '<div class="loading" style="color:red">Gagal memuat data. Pastikan URL API benar & izin akses terbuka.</div>';
-        setStickmanState('idle');
-      });
+    // === APP INIT (setelah PIN benar) ===
+    function initApp() {
+      // ⚠️ GANTI DENGAN URL /exec DARI APPS SCRIPT ANDA
+      const URL_API = "https://script.google.com/macros/s/AKfycbxH3ZuUkKe2O_meGKp96gPMtU68fbWaXNeHl77Z27JGLBtMmctv-Y_bQl7EEpK6ChtmvQ/exec";
+      
+      setStickmanState('loading');
+      fetch(URL_API, { redirect: 'follow' })
+        .then(r => r.json())
+        .then(data => { appData = data; renderSummary(); setStickmanState('idle'); })
+        .catch(err => {
+          document.getElementById('periodList').innerHTML = '<div class="loading" style="color:red">Gagal memuat data. Pastikan URL API benar & izin akses terbuka.</div>';
+          setStickmanState('idle');
+        });
+      setTimeout(()=>{document.getElementById('stickmanMascot').classList.add('enter');setTimeout(()=>document.getElementById('stickmanMascot').classList.remove('enter'),700);},500);
+    }
+
+    // === FORMAT ===
+    function formatRupiah(angka) {
+      let clean = String(angka).replace(/[^0-9]/g, '');
+      if (!clean) return "Rp 0";
+      return 'Rp ' + parseInt(clean, 10).toLocaleString('id-ID');
+    }
 
     // === RENDER & NAVIGASI ===
     function renderSummary(){let gS=0,gN=0,gP=appData.periods.length;appData.periods.forEach(p=>{gS+=p.totalSekolah;gN+=p.totalNominal;});document.getElementById('summaryTotal').innerHTML=`<div class="total-item"><div class="label">📊 Total Periode</div><div class="value">${gP}</div></div><div class="total-item"><div class="label">🏫 Total Sekolah</div><div class="value">${gS}</div></div><div class="total-item nominal"><div class="label">💰 Grand Total</div><div class="value">${formatRupiah(gN)}</div></div>`;let l=document.getElementById('periodList');if(!appData.periods||!appData.periods.length){l.innerHTML='<div class="loading">Tidak ada data.</div>';return;}let h='';appData.periods.forEach((p,i)=>{h+=`<div class="period-card" onclick="showPeriod(${i})"><div class="period-icon">📅</div><h3>${p.name}</h3><div class="meta"><span>🏫 ${p.totalSekolah} Sekolah</span><span>👥 PIC</span></div><div class="total-nominal">${formatRupiah(p.totalNominal)}</div><span class="arrow">→</span></div>`;});l.innerHTML=h;}
@@ -434,7 +683,9 @@
     function showDetail(pIdx,sIdx){animateTransition(()=>{let p=appData.periods[pIdx],s=p.schools[sIdx];document.getElementById('breadcrumbDetail').innerHTML=`<a onclick="showSummary()">🏠 Summary</a><span class="sep">›</span><a onclick="showPeriod(${pIdx})">📅 ${p.name}</a><span class="sep">›</span><span class="current">🏫 ${s.sekolah}</span>`;document.getElementById('detailSekolah').innerText=s.sekolah;document.getElementById('detailNo').innerText='Data No. '+s.no+' • Periode '+p.name;document.getElementById('detailPIC').innerText=s.pic;document.getElementById('detailBank').innerText=s.bank;document.getElementById('detailRek').innerText=s.rekening;document.getElementById('detailNom').innerText=formatRupiah(s.nominal);let ic=document.getElementById('imgContainer');ic.innerHTML=getStickmanLoader();setStickmanState('loading');if(s.fullUrl){const img=new Image();img.onload=function(){ic.innerHTML=`<img src="${s.fullUrl}" class="bukti-img" onclick="openZoom('${s.fullUrl}')">`;setStickmanState('idle');};img.onerror=function(){ic.innerHTML='<div class="no-image">❌ Gagal memuat gambar<br><small>Periksa izin akses file di Drive</small></div>';setStickmanState('idle');};img.src=s.fullUrl;}else{setTimeout(()=>{ic.innerHTML='<div class="no-image">📭 Tidak ada bukti transfer</div>';setStickmanState('idle');},500);}document.getElementById('viewSummary').classList.add('hidden');document.getElementById('viewPeriod').classList.add('hidden');document.getElementById('viewDetail').classList.remove('hidden');window.scrollTo(0,0);});}
     function openZoom(src){document.getElementById('zoomImg').src=src;document.getElementById('zoomModal').classList.add('active');}
     function closeZoom(){document.getElementById('zoomModal').classList.remove('active');}
-    setTimeout(()=>{document.getElementById('stickmanMascot').classList.add('enter');setTimeout(()=>document.getElementById('stickmanMascot').classList.remove('enter'),700);},500);
+
+    // === START ===
+    initPinCheck();
   </script>
 </body>
 </html>
