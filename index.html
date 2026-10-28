@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Summary Insentif PIC - Rekapitulasi Bukti Transfer">
-  <title>💰 Summary Insentif PIC</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <meta name="description" content="Summary Insentif PIC - Pink Edition">
+  <title>💕 Summary Insentif PIC</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💕</text></svg>">
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/components.css">
   <link rel="stylesheet" href="assets/css/views.css">
@@ -16,8 +22,8 @@
   <!-- PIN LOGIN OVERLAY -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-card">
-      <div class="pin-icon">🔒</div>
-      <h2 class="pin-title">Akses Terbatas</h2>
+      <div class="pin-icon">💕</div>
+      <h2 class="pin-title">Selamat Datang</h2>
       <p class="pin-subtitle">Masukkan 4 digit PIN untuk melanjutkan</p>
       
       <form data-form="login" id="loginForm">
@@ -25,7 +31,7 @@
           <div class="pin-info-title">💡 Informasi Akses</div>
           <div class="pin-info-row">
             <span class="pin-badge pin-badge-sa">👑 Superadmin</span>
-            <span>PIN <b>UnPublish</b></span>
+            <span>PIN <b>2000</b></span>
           </div>
           <div class="pin-info-row">
             <span class="pin-badge pin-badge-viewer">👁️ Viewer</span>
@@ -45,10 +51,13 @@
           required
         >
         <div class="pin-message" id="pinMessage"></div>
-        <button type="submit" class="pin-submit" id="pinSubmit">🔓 Masuk</button>
+        <button type="submit" class="pin-submit" id="pinSubmit">
+          <span class="btn-text">🔓 Masuk</span>
+          <span class="btn-loader hidden"></span>
+        </button>
       </form>
       
-      <p class="pin-hint">💡 Hubungi Superadmin jika lupa PIN</p>
+      <p class="pin-hint">💕 Hubungi Superadmin jika lupa PIN</p>
     </div>
   </div>
 
@@ -57,7 +66,7 @@
     
     <div class="app-header">
       <div class="header-brand">
-        <h1>💰 SUMMARY INSENTIF PIC</h1>
+        <h1>💕 SUMMARY INSENTIF PIC</h1>
         <p class="header-subtitle">Rekapitulasi Bukti Transfer PIC</p>
       </div>
       <div class="header-right">
@@ -67,19 +76,19 @@
     </div>
 
     <!-- VIEW: SUMMARY -->
-    <div id="viewSummary">
+    <div id="viewSummary" class="view-container">
       <div id="summaryTotal" class="summary-total"></div>
       <h2 class="section-title">📅 Pilih Periode</h2>
-      <div id="periodList" class="card-grid">
-        <div class="loading">Memuat data...</div>
-      </div>
+      <div id="periodList" class="card-grid"></div>
     </div>
 
     <!-- VIEW: PERIOD -->
-    <div id="viewPeriod" class="hidden">
+    <div id="viewPeriod" class="hidden view-container">
       <div id="breadcrumbPeriod" class="breadcrumb"></div>
       <div class="view-toolbar">
-        <button class="btn btn-secondary" data-action="show-summary">← Kembali</button>
+        <button class="btn btn-secondary" data-action="show-summary">
+          <span class="btn-icon-left">←</span> Kembali
+        </button>
       </div>
       <div id="periodHeader" class="detail-header"></div>
       <div id="periodActions" class="action-bar"></div>
@@ -87,10 +96,12 @@
     </div>
 
     <!-- VIEW: DETAIL -->
-    <div id="viewDetail" class="hidden">
+    <div id="viewDetail" class="hidden view-container">
       <div id="breadcrumbDetail" class="breadcrumb"></div>
       <div class="view-toolbar">
-        <button class="btn btn-secondary" data-action="back-to-period">← Kembali</button>
+        <button class="btn btn-secondary" data-action="back-to-period">
+          <span class="btn-icon-left">←</span> Kembali
+        </button>
       </div>
       <div class="detail-header">
         <div>
@@ -113,6 +124,16 @@
           <div id="imgContainer"></div>
         </div>
       </div>
+    </div>
+
+  </div>
+
+  <!-- GLOBAL LOADER OVERLAY -->
+  <div id="globalLoader" class="global-loader hidden">
+    <div class="loader-content">
+      <div class="loader-heart">💕</div>
+      <div class="loader-text" id="loaderText">Memproses...</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
     </div>
   </div>
 
@@ -170,11 +191,12 @@
         </div>
         <div class="form-group"><label>Tanggal Transfer</label><input type="date" id="schoolDate"></div>
         <div class="form-group">
-          <label>Bukti Transfer (Maks 5MB)</label>
+          <label>Bukti Transfer (Maks 5MB, auto-compress)</label>
           <label class="file-upload" id="fileUploadLabel" for="schoolFile">
             <div class="file-upload-text">
               <span class="file-upload-icon">📁</span>
-              <span>Klik untuk pilih gambar atau drag di sini</span>
+              <span>Klik untuk pilih gambar</span>
+              <small>Otomatis di-compress untuk ukuran optimal</small>
             </div>
             <input type="file" id="schoolFile" accept="image/*" onchange="previewFile(event)">
             <img id="filePreview" class="upload-preview hidden" alt="Preview">
