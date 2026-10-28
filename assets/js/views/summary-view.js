@@ -1,9 +1,11 @@
 // ============================================
 // SUMMARY VIEW
+// FIX: Tombol edit sekarang berfungsi (tidak stopPropagation)
+// FEATURE: Tanggal range ditampilkan di kartu
 // ============================================
 import { state } from '../state.js';
 import { auth } from '../auth.js';
-import { formatRupiah, escapeHtml } from '../utils/format.js';
+import { formatRupiah, escapeHtml, formatDate } from '../utils/format.js';
 
 export const SummaryView = {
     render() {
@@ -56,28 +58,111 @@ export const SummaryView = {
             const totalNom = (p.schools || []).reduce((a, s) => a + (Number(s.nominal) || 0), 0);
             const periodId = p.id;
             
+            // FIX: Tidak ada stopPropagation lagi - event bubbling normal
             const actionButtons = auth.isSuperadmin() ? `
-                <div class="card-actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-icon edit" data-action="edit-period" data-id="${periodId}" title="Edit">✏️</button>
-                    <button class="btn btn-icon delete" data-action="delete-period" data-id="${periodId}" title="Hapus">🗑️</button>
+                <div class="card-actions">
+                    <button class="btn btn-icon edit" data-action="edit-period" data-id="${periodId}" title="Edit Periode">✏️</button>
+                    <button class="btn btn-icon delete" data-action="delete-period" data-id="${periodId}" title="Hapus Periode">🗑️</button>
                 </div>
             ` : '';
 
-            const inactiveTag = !p.is_active ? '<span class="status-badge status-inactive" style="margin-left:8px;">Nonaktif</span>' : '';
+            const inactiveTag = !p.is_active ? '<span class="status-badge status-inactive">Nonaktif</span>' : '';
+            
+            // TANGGAL DI KARTU - Format profesional
+            const dateRange = this.formatDateRange(p.start_date, p.end_date);
 
             return `
                 <div class="period-card" data-action="show-period" data-idx="${i}">
                     ${actionButtons}
                     <div class="icon">📅</div>
                     <h3>${escapeHtml(p.name)}${inactiveTag}</h3>
+                    ${dateRange}
                     <div class="meta">
                         <span>🏫 ${schoolCount} Sekolah</span>
-                        <span>${p.start_date ? new Date(p.start_date).toLocaleDateString('id-ID') : ''}</span>
+                        <span>💕 ${schoolCount > 0 ? 'Aktif' : 'Kosong'}</span>
                     </div>
                     <div class="total-nominal">${formatRupiah(totalNom)}</div>
                 </div>
             `;
         }).join('');
+    },
+
+    /**
+     * Format range tanggal dengan pattern professional (seperti Stripe/Airbnb)
+     */
+    formatDateRange(start, end) {
+        if (!start && !end) {
+            return `
+                <div class="period-date-range">
+                    <span class="date-icon">📆</span>
+                    <div class="date-text">
+                        <span class="date-main">Tanggal Belum Diatur</span>
+                        <span class="date-sub">Periode fleksibel</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (start && !end) {
+            const startDate = new Date(start);
+            const mainDate = startDate.toLocaleDateString('id-ID', { 
+                day: 'numeric', month: 'short', year: 'numeric' 
+            });
+            return `
+                <div class="period-date-range">
+                    <span class="date-icon">📅</span>
+                    <div class="date-text">
+                        <span class="date-main">Mulai ${mainDate}</span>
+                        <span class="date-sub">Tanggal mulai saja</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (!start && end) {
+            const endDate = new Date(end);
+            const mainDate = endDate.toLocaleDateString('id-ID', { 
+                day: 'numeric', month: 'short', year: 'numeric' 
+            });
+            return `
+                <div class="period-date-range">
+                    <span class="date-icon">🏁</span>
+                    <div class="date-text">
+                        <span class="date-main">Berakhir ${mainDate}</span>
+                        <span class="date-sub">Tanggal akhir saja</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Both dates - range
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const sameYear = startDate.getFullYear() === endDate.getFullYear();
+        const sameMonth = sameYear && startDate.getMonth() === endDate.getMonth();
+        
+        let mainDate;
+        if (sameMonth) {
+            mainDate = `${startDate.getDate()} - ${endDate.getDate()} ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+        } else if (sameYear) {
+            mainDate = `${startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${endDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        } else {
+            mainDate = `${startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        }
+        
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const durationText = diffDays === 1 ? '1 hari' : `${diffDays} hari`;
+        
+        return `
+            <div class="period-date-range">
+                <span class="date-icon">📅</span>
+                <div class="date-text">
+                    <span class="date-main">${mainDate}</span>
+                    <span class="date-sub">Durasi: ${durationText}</span>
+                </div>
+            </div>
+        `;
     },
 
     renderSkeleton(count = 3) {
