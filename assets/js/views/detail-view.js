@@ -1,7 +1,9 @@
 // ============================================
-// DETAIL VIEW (SINGLE SCHOOL)
+// DETAIL VIEW - RENDER SINGLE SCHOOL
 // ============================================
+
 import { state } from '../state.js';
+import { auth } from '../auth.js';
 import { formatRupiah, formatDate, escapeHtml } from '../utils/format.js';
 
 export const DetailView = {
@@ -10,9 +12,9 @@ export const DetailView = {
         if (!p || !school) return;
 
         document.getElementById('breadcrumbDetail').innerHTML = `
-            <a onclick="window.showSummary()">🏠 Summary</a>
+            <a data-action="show-summary">🏠 Summary</a>
             <span class="sep">›</span>
-            <a onclick="window.showPeriod(${state.currentPeriodIdx})">📅 ${escapeHtml(p.name)}</a>
+            <a data-action="show-period" data-idx="${state.currentPeriodIdx}">📅 ${escapeHtml(p.name)}</a>
             <span class="sep">›</span>
             <span class="current">🏫 ${escapeHtml(school.sekolah_name)}</span>
         `;
@@ -26,10 +28,22 @@ export const DetailView = {
         document.getElementById('detailDate').innerText = formatDate(school.transfer_date);
         document.getElementById('detailNotes').innerText = school.notes || '-';
 
+        const detailActions = document.getElementById('detailActions');
+        if (auth.isSuperadmin()) {
+            detailActions.innerHTML = `
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-icon edit" data-action="edit-school" data-id="${school.id}" title="Edit">✏️</button>
+                    <button class="btn btn-icon delete" data-action="delete-school" data-id="${school.id}" title="Hapus">🗑️</button>
+                </div>
+            `;
+        } else {
+            detailActions.innerHTML = '';
+        }
+
         const ic = document.getElementById('imgContainer');
         if (school.transfer_proof_url) {
             const url = school.transfer_proof_url;
-            ic.innerHTML = `<img src="${url}" class="bukti-img" onclick="window.openZoom('${url}')">`;
+            ic.innerHTML = `<img src="${url}" class="bukti-img" data-action="open-zoom" data-src="${url}">`;
         } else {
             ic.innerHTML = '<div class="no-image">📭 Tidak ada bukti transfer</div>';
         }
@@ -37,20 +51,3 @@ export const DetailView = {
         state.setCurrentSchool(school);
     }
 };
-
-window.openZoom = (src) => {
-    document.getElementById('zoomImg').src = src;
-    document.getElementById('zoomModal').classList.add('active');
-};
-
-window.closeZoom = () => {
-    document.getElementById('zoomModal').classList.remove('active');
-};
-
-// ESC untuk tutup zoom
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        window.closeZoom();
-        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
-    }
-});
