@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summary Insentif PIC</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/views.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+</head>
+<body>
+
+  <!-- PIN LOGIN OVERLAY -->
+  <div class="pin-overlay" id="pinOverlay">
+    <div class="pin-card">
+      <div class="pin-icon">🔒</div>
+      <h2 class="pin-title">Akses Terbatas</h2>
+      <p class="pin-subtitle">Masukkan PIN untuk melanjutkan</p>
+      <form onsubmit="handleLogin(event)">
+        <input 
+          type="text" 
+          id="username" 
+          class="pin-input" 
+          placeholder="Username" 
+          value="admin"
+          style="letter-spacing: normal; font-size: 16px; margin-bottom: 10px;"
+        >
+        <input 
+          type="password" 
+          id="pinInput" 
+          class="pin-input" 
+          placeholder="••••" 
+          maxlength="4" 
+          autocomplete="off"
+          autofocus
+        >
+        <div class="pin-message" id="pinMessage"></div>
+        <button type="submit" class="pin-submit">🔓 Buka Akses</button>
+      </form>
+      <p style="font-size: 11px; color: #95a5a6; margin-top: 15px;">
+        💡 Hubungi admin jika lupa PIN
+      </p>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="app-container" id="mainContainer" style="display:none;">
+    
+    <div class="app-header">
+      <div>
+        <h1>💰 SUMMARY INSENTIF PIC</h1>
+        <p style="font-size:13px; opacity:0.9; margin-top:4px;">Rekapitulasi Bukti Transfer PIC</p>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+        <div id="userInfo" style="font-size:13px; color:white;"></div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="window.openPeriodModal()">➕ Periode Baru</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: SUMMARY -->
+    <div id="viewSummary">
+      <div id="summaryTotal" class="summary-total"></div>
+      <h2 class="section-title">📅 Pilih Periode</h2>
+      <div id="periodList" class="card-grid">
+        <div class="loading">Memuat data...</div>
+      </div>
+    </div>
+
+    <!-- VIEW: PERIOD -->
+    <div id="viewPeriod" class="hidden">
+      <div id="breadcrumbPeriod" class="breadcrumb"></div>
+      <button class="btn btn-secondary" onclick="window.showSummary()" style="margin-bottom:15px;">
+        ← Kembali
+      </button>
+      <div id="periodHeader" class="detail-header" style="margin-bottom:15px;"></div>
+      <div style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="window.openSchoolModal()">
+          ➕ Tambah Sekolah
+        </button>
+      </div>
+      <div id="schoolList" class="card-grid"></div>
+    </div>
+
+    <!-- VIEW: DETAIL -->
+    <div id="viewDetail" class="hidden">
+      <div id="breadcrumbDetail" class="breadcrumb"></div>
+      <button class="btn btn-secondary" onclick="window.showPeriod(${state?.currentPeriodIdx || 0})" style="margin-bottom:15px;">
+        ← Kembali
+      </button>
+      <div class="detail-header">
+        <div>
+          <h2 id="detailSekolah"></h2>
+          <p class="meta" id="detailNo"></p>
+        </div>
+      </div>
+      <div class="detail-wrapper">
+        <div class="detail-left">
+          <div class="detail-row">
+            <span class="detail-label">👤 PIC</span>
+            <span class="detail-value" id="detailPIC">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">🏦 Bank / E-Wallet</span>
+            <span class="detail-value" id="detailBank">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">💳 No. Rekening / HP</span>
+            <span class="detail-value" id="detailRek">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">💰 Nominal Transfer</span>
+            <span class="detail-value nominal" id="detailNom">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📅 Tanggal Transfer</span>
+            <span class="detail-value" id="detailDate">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📝 Catatan</span>
+            <span class="detail-value" id="detailNotes">-</span>
+          </div>
+        </div>
+        <div class="detail-right">
+          <h4>📷 Bukti Transfer</h4>
+          <div id="imgContainer"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PERIOD MODAL -->
+  <div id="periodModal" class="modal-overlay">
+    <div class="modal-form">
+      <h3>
+        <span id="periodModalTitle">➕ Periode Baru</span>
+        <button class="btn btn-icon delete" onclick="window.closeModal('periodModal')" style="position:static;">✕</button>
+      </h3>
+      <form onsubmit="savePeriod(event)">
+        <input type="hidden" id="periodId">
+        <div class="form-group">
+          <label>Nama Periode *</label>
+          <input type="text" id="periodName" required placeholder="Contoh: Periode Januari 2026">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal Mulai</label>
+            <input type="date" id="periodStart">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Selesai</label>
+            <input type="date" id="periodEnd">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Deskripsi</label>
+          <textarea id="periodDesc" placeholder="Deskripsi (opsional)"></textarea>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="periodActive" checked> Aktif</label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal('periodModal')">Batal</button>
+          <button type="submit" class="btn btn-primary">💾 Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCHOOL MODAL -->
+  <div id="schoolModal" class="modal-overlay">
+    <div class="modal-form">
+      <h3>
+        <span id="schoolModalTitle">➕ Tambah Sekolah</span>
+        <button class="btn btn-icon delete" onclick="window.closeModal('schoolModal')" style="position:static;">✕</button>
+      </h3>
+      <form onsubmit="saveSchool(event)">
+        <input type="hidden" id="schoolId">
+        <input type="hidden" id="schoolPeriodId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>No. Urut</label>
+            <input type="number" id="schoolNo" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label>Nama Sekolah *</label>
+            <input type="text" id="schoolName" required placeholder="SDN 01 Jakarta">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama PIC *</label>
+            <input type="text" id="schoolPIC" required placeholder="Budi Santoso">
+          </div>
+          <div class="form-group">
+            <label>Bank / E-Wallet *</label>
+            <input type="text" id="schoolBank" required placeholder="BCA / DANA / OVO">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>No. Rekening / HP *</label>
+            <input type="text" id="schoolRek" required placeholder="1234567890">
+          </div>
+          <div class="form-group">
+            <label>Nominal Transfer (Rp) *</label>
+            <input type="number" id="schoolNom" required min="0" placeholder="500000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tanggal Transfer</label>
+          <input type="date" id="schoolDate">
+        </div>
+        <div class="form-group">
+          <label>Bukti Transfer (Maks 5MB)</label>
+          <label class="file-upload" id="fileUploadLabel" for="schoolFile">
+            <div>📁 Klik untuk pilih gambar</div>
+            <input type="file" id="schoolFile" accept="image/*" onchange="previewFile(event)">
+            <img id="filePreview" class="upload-preview hidden">
+          </label>
+          <small id="fileInfo" style="color:var(--gray); display:block; margin-top:5px;"></small>
+        </div>
+        <div class="form-group">
+          <label>Catatan</label>
+          <textarea id="schoolNotes" placeholder="Catatan tambahan"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal('schoolModal')">Batal</button>
+          <button type="submit" class="btn btn-primary">💾 Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ZOOM MODAL -->
+  <div id="zoomModal" class="zoom-modal" onclick="window.closeZoom()">
+    <img id="zoomImg">
+  </div>
+
+  <!-- JS MODULES -->
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
