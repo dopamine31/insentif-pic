@@ -1,10 +1,11 @@
 // ============================================
-// PERIOD MODAL - CREATE/EDIT FORM
+// PERIOD MODAL
 // ============================================
 import { PeriodService } from '../services/period-service.js';
 import { state } from '../state.js';
 import { toast } from '../utils/toast.js';
 import { auth } from '../auth.js';
+import { Loader } from '../app.js';
 
 export const PeriodModal = {
     open(id = null) {
@@ -62,24 +63,31 @@ export const PeriodModal = {
         try {
             const submitBtn = e.target.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
-            submitBtn.innerText = '⏳ Menyimpan...';
+            submitBtn.innerHTML = '<span class="btn-loader"></span> Menyimpan...';
 
             if (id) {
                 await PeriodService.update(id, payload);
-                toast('Periode diperbarui', 'success');
+                toast('Periode diperbarui 💕', 'success');
             } else {
                 await PeriodService.create(payload);
-                toast('Periode ditambahkan', 'success');
+                toast('Periode ditambahkan 💕', 'success');
             }
 
             document.getElementById('periodModal').classList.remove('active');
-            await state.loadPeriods();
+            
+            // AUTO-REFRESH: reload data & re-render view aktif
+            if (window.app) {
+                await window.app.refreshAndShow('summary');
+            } else {
+                await state.loadPeriods();
+            }
         } catch (err) {
             toast('Gagal menyimpan: ' + err.message, 'error');
+            Loader.hide();
         } finally {
             const submitBtn = e.target.querySelector('button[type="submit"]');
             submitBtn.disabled = false;
-            submitBtn.innerText = '💾 Simpan';
+            submitBtn.innerHTML = '💾 Simpan';
         }
     }
 };
