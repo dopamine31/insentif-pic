@@ -1,5 +1,6 @@
 // ============================================
 // SCHOOL MODAL
+// FIX: No. urut otomatis (tidak perlu input)
 // ============================================
 import { SchoolService } from '../services/school-service.js';
 import { state } from '../state.js';
@@ -31,7 +32,6 @@ export const SchoolModal = {
             document.getElementById('schoolModalTitle').innerText = '✏️ Edit Sekolah';
             document.getElementById('schoolId').value = school.id;
             document.getElementById('schoolPeriodId').value = school.period_id;
-            document.getElementById('schoolNo').value = school.no_urut || 1;
             document.getElementById('schoolName').value = school.sekolah_name || '';
             document.getElementById('schoolPIC').value = school.pic_name || '';
             document.getElementById('schoolBank').value = school.bank_name || '';
@@ -47,6 +47,7 @@ export const SchoolModal = {
             }
         } else {
             document.getElementById('schoolModalTitle').innerText = '➕ Tambah Sekolah';
+            // No. urut akan di-generate otomatis saat save
         }
 
         modal.classList.add('active');
@@ -58,7 +59,6 @@ export const SchoolModal = {
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Calculate new dimensions
                     let width = img.width;
                     let height = img.height;
                     
@@ -139,9 +139,24 @@ export const SchoolModal = {
         const id = document.getElementById('schoolId').value;
         const periodId = document.getElementById('schoolPeriodId').value;
 
+        // NO URUT OTOMATIS - dihitung dari jumlah sekolah existing
+        const period = state.periods.find(p => p.id === periodId);
+        const existingSchools = period?.schools || [];
+        let autoNoUrut;
+        
+        if (id) {
+            // Edit - pertahankan no_urut existing
+            const existing = existingSchools.find(s => s.id === id);
+            autoNoUrut = existing?.no_urut || 1;
+        } else {
+            // Create - auto increment dari max existing
+            const maxNo = existingSchools.reduce((max, s) => Math.max(max, s.no_urut || 0), 0);
+            autoNoUrut = maxNo + 1;
+        }
+
         const data = {
             period_id: periodId,
-            no_urut: parseInt(document.getElementById('schoolNo').value) || 1,
+            no_urut: autoNoUrut, // AUTO-GENERATED
             sekolah_name: document.getElementById('schoolName').value.trim(),
             pic_name: document.getElementById('schoolPIC').value.trim(),
             bank_name: document.getElementById('schoolBank').value.trim(),
@@ -179,24 +194,22 @@ export const SchoolModal = {
             }
 
             if (id) {
-                const existing = state.periods
-                    .flatMap(p => p.schools || [])
-                    .find(s => s.id === id);
+                const existing = existingSchools.find(s => s.id === id);
                 await SchoolService.update(
                     id, 
                     data, 
                     fileToUpload, 
                     existing?.transfer_proof_path
                 );
-                toast('Data sekolah diperbarui 💕', 'success');
+                toast(`Data diperbarui (No. ${autoNoUrut}) 💕`, 'success');
             } else {
                 await SchoolService.create(data, fileToUpload);
-                toast('Data sekolah ditambahkan 💕', 'success');
+                toast(`Sekolah ditambahkan sebagai No. ${autoNoUrut} 💕`, 'success');
             }
 
             document.getElementById('schoolModal').classList.remove('active');
             
-            // AUTO-REFRESH
+            // AUTO-REFRESH dengan navigate ke view aktif
             if (window.app) {
                 await window.app.refreshAndShow('period');
             } else {
