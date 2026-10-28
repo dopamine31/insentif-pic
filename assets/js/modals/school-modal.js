@@ -1,14 +1,21 @@
 // ============================================
-// SCHOOL MODAL (CREATE/EDIT + UPLOAD)
+// SCHOOL MODAL - CREATE/EDIT FORM + UPLOAD
 // ============================================
+
 import { SchoolService } from '../services/school-service.js';
 import { state } from '../state.js';
 import { toast } from '../utils/toast.js';
+import { auth } from '../auth.js';
 
 export const SchoolModal = {
     currentFile: null,
 
     open(school = null) {
+        if (!auth.isSuperadmin()) {
+            toast('⛔ Hanya Superadmin', 'warning');
+            return;
+        }
+
         const modal = document.getElementById('schoolModal');
         const form = modal.querySelector('form');
         form.reset();
@@ -75,6 +82,12 @@ export const SchoolModal = {
 
     async save(e) {
         e.preventDefault();
+        
+        if (!auth.isSuperadmin()) {
+            toast('⛔ Hanya Superadmin', 'warning');
+            return;
+        }
+
         const id = document.getElementById('schoolId').value;
         const periodId = document.getElementById('schoolPeriodId').value;
 
@@ -117,6 +130,7 @@ export const SchoolModal = {
             }
 
             document.getElementById('schoolModal').classList.remove('active');
+            await state.loadPeriods();
         } catch (err) {
             toast('Gagal menyimpan: ' + err.message, 'error');
         } finally {
@@ -126,7 +140,3 @@ export const SchoolModal = {
         }
     }
 };
-
-// Expose ke window
-window.saveSchool = (e) => SchoolModal.save(e);
-window.previewFile = (e) => SchoolModal.previewFile(e);
