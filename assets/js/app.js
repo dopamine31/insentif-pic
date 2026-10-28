@@ -1,6 +1,5 @@
 // ============================================
-// MAIN APPLICATION ENTRY POINT
-// Summary Insentif PIC - Modular Architecture
+// MAIN APPLICATION - OPTIMIZED
 // ============================================
 
 import { auth } from './auth.js';
@@ -10,6 +9,22 @@ import { PeriodView } from './views/period-view.js';
 import { DetailView } from './views/detail-view.js';
 import { toast } from './utils/toast.js';
 import { escapeHtml } from './utils/format.js';
+
+// ============================================
+// GLOBAL LOADER
+// ============================================
+export const Loader = {
+    show(text = 'Memproses...') {
+        const loader = document.getElementById('globalLoader');
+        const textEl = document.getElementById('loaderText');
+        if (textEl) textEl.innerText = text;
+        if (loader) loader.classList.remove('hidden');
+    },
+    hide() {
+        const loader = document.getElementById('globalLoader');
+        if (loader) loader.classList.add('hidden');
+    }
+};
 
 // ============================================
 // MAIN APP CLASS
@@ -63,6 +78,8 @@ class App {
         const pin = document.getElementById('pinInput').value.trim();
         const msgEl = document.getElementById('pinMessage');
         const submitBtn = document.getElementById('pinSubmit');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
 
         if (!/^\d{4}$/.test(pin)) {
             msgEl.innerText = '⚠️ PIN harus 4 digit angka';
@@ -73,6 +90,8 @@ class App {
         msgEl.innerText = '⏳ Memverifikasi...';
         msgEl.className = 'pin-message';
         submitBtn.disabled = true;
+        if (btnText) btnText.classList.add('hidden');
+        if (btnLoader) btnLoader.classList.remove('hidden');
 
         try {
             const result = await auth.login(pin);
@@ -80,7 +99,7 @@ class App {
             if (result.success) {
                 msgEl.innerText = result.message;
                 msgEl.className = 'pin-message success';
-                setTimeout(() => this.unlockApp(), 600);
+                setTimeout(() => this.unlockApp(), 700);
             } else {
                 msgEl.innerText = result.message;
                 msgEl.className = 'pin-message error';
@@ -96,6 +115,8 @@ class App {
             msgEl.className = 'pin-message error';
         } finally {
             submitBtn.disabled = false;
+            if (btnText) btnText.classList.remove('hidden');
+            if (btnLoader) btnLoader.classList.add('hidden');
         }
     }
 
@@ -121,7 +142,9 @@ class App {
             document.body.dataset.role = user.role;
         }
 
+        Loader.show('Memuat data...');
         await this.loadData();
+        Loader.hide();
     }
 
     renderHeaderActions() {
@@ -131,15 +154,14 @@ class App {
                 <button class="btn btn-primary" data-action="open-period-modal">
                     ➕ Periode Baru
                 </button>
-                <button class="btn" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color:white;" 
-                        data-action="open-viewers-modal">
+                <button class="btn btn-gold" data-action="open-viewers-modal">
                     👥 Kelola Viewer
                 </button>
             `;
         } else {
             actions.innerHTML = `
-                <div style="background:rgba(255,255,255,0.2); padding:8px 14px; border-radius:8px; font-size:12px; color:white;">
-                    👁️ Mode Viewer — Read Only
+                <div style="background:rgba(100,116,139,0.1); padding:10px 16px; border-radius:10px; font-size:12px; color:#475569; font-weight:600; border:1px solid rgba(100,116,139,0.2);">
+                    🔒 Mode Viewer
                 </div>
             `;
         }
@@ -153,20 +175,26 @@ class App {
             console.error('Load data error:', err);
             toast('Gagal memuat data: ' + err.message, 'error');
             document.getElementById('periodList').innerHTML = `
-                <div class="loading" style="color:var(--danger)">
-                    ❌ ${err.message}<br>
-                    <small>Pastikan konfigurasi Supabase benar</small>
+                <div class="empty-state">
+                    <div class="empty-state-icon">😔</div>
+                    <div class="empty-state-title">Gagal Memuat Data</div>
+                    <div class="empty-state-text">${escapeHtml(err.message)}</div>
+                    <button class="btn btn-primary" data-action="retry-load">🔄 Coba Lagi</button>
                 </div>
             `;
         }
     }
+
+    // ============================================
+    // NAVIGATION - DENGAN AUTO-RENDER
+    // ============================================
 
     showSummary() {
         document.getElementById('viewSummary').classList.remove('hidden');
         document.getElementById('viewPeriod').classList.add('hidden');
         document.getElementById('viewDetail').classList.add('hidden');
         SummaryView.render();
-        window.scrollTo(0, 0);
+        this.scrollToTop();
     }
 
     showPeriod(idx) {
@@ -175,7 +203,7 @@ class App {
         document.getElementById('viewPeriod').classList.remove('hidden');
         document.getElementById('viewDetail').classList.add('hidden');
         PeriodView.render(idx);
-        window.scrollTo(0, 0);
+        this.scrollToTop();
     }
 
     showDetail(school) {
@@ -183,11 +211,54 @@ class App {
         document.getElementById('viewPeriod').classList.add('hidden');
         document.getElementById('viewDetail').classList.remove('hidden');
         DetailView.render(school);
-        window.scrollTo(0, 0);
+        this.scrollToTop();
     }
 
     backToPeriod() {
         this.showPeriod(state.currentPeriodIdx);
+    }
+
+    scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ============================================
+    // REFRESH CURRENT VIEW - FIX BUG
+    // ============================================
+    
+    async refreshAndShow(viewName) {
+        Loader.show('Memperbarui data...');
+        try {
+            await state.loadPeriods();
+            if (viewName === 'summary') {
+                this.showSummary();
+            } else if (viewName === 'period') {
+                this.showPeriod(state.currentPeriodIdx);
+            } else if (viewName === 'detail') {
+                // Re-render detail dengan data terbaru
+                const school = state.currentSchool;
+                if (school) {
+                    const updatedSchool = this.findSchoolById(school.id);
+                    if (updatedSchool) {
+                        this.showDetail(updatedSchool);
+                    } else {
+                        this.showPeriod(state.currentPeriodIdx);
+                    }
+                } else {
+                    this.showPeriod(state.currentPeriodIdx);
+                }
+            }
+        } catch (err) {
+            toast('Gagal memperbarui: ' + err.message, 'error');
+        } finally {
+            Loader.hide();
+        }
+    }
+
+    getCurrentView() {
+        if (!document.getElementById('viewDetail').classList.contains('hidden')) return 'detail';
+        if (!document.getElementById('viewPeriod').classList.contains('hidden')) return 'period';
+        return 'summary';
     }
 
     // ============================================
@@ -219,6 +290,14 @@ class App {
                 this.closeAllModals();
             }
         });
+
+        // Click on pin-display-value to copy
+        document.getElementById('pinDisplayValue')?.addEventListener('click', () => {
+            const pin = document.getElementById('pinDisplayValue').innerText;
+            navigator.clipboard.writeText(pin).then(() => {
+                toast('PIN berhasil di-copy!', 'success');
+            });
+        });
     }
 
     async handleAction(action, id, target) {
@@ -239,11 +318,11 @@ class App {
                 case 'delete-period':
                     if (!this.requireSuperadmin()) return;
                     if (!confirm('Hapus periode ini? Semua data sekolah di dalamnya ikut terhapus.')) return;
+                    Loader.show('Menghapus periode...');
                     const { PeriodService } = await import('./services/period-service.js');
                     await PeriodService.delete(id);
-                    toast('Periode dihapus', 'success');
-                    await state.loadPeriods();
-                    this.showSummary();
+                    toast('Periode dihapus 💕', 'success');
+                    await this.refreshAndShow('summary');
                     break;
 
                 case 'open-school-modal':
@@ -265,11 +344,11 @@ class App {
                     if (!this.requireSuperadmin()) return;
                     const schoolDel = this.findSchoolById(id);
                     if (schoolDel && confirm(`Hapus ${schoolDel.sekolah_name}?`)) {
+                        Loader.show('Menghapus data...');
                         const { SchoolService } = await import('./services/school-service.js');
                         await SchoolService.delete(schoolDel.id, schoolDel.transfer_proof_path);
-                        toast('Data dihapus', 'success');
-                        await state.loadPeriods();
-                        this.showPeriod(state.currentPeriodIdx);
+                        toast('Data dihapus 💕', 'success');
+                        await this.refreshAndShow('period');
                     }
                     break;
 
@@ -358,10 +437,15 @@ class App {
                     auth.logout();
                     location.reload();
                     break;
+
+                case 'retry-load':
+                    await this.loadData();
+                    break;
             }
         } catch (err) {
             console.error('Action error:', err);
             toast('Error: ' + err.message, 'error');
+            Loader.hide();
         }
     }
 
@@ -374,12 +458,14 @@ class App {
                     
                 case 'period':
                     if (!this.requireSuperadmin()) return;
+                    Loader.show('Menyimpan periode...');
                     const { PeriodModal } = await import('./modals/period-modal.js');
                     await PeriodModal.save(e);
                     break;
                     
                 case 'school':
                     if (!this.requireSuperadmin()) return;
+                    Loader.show('Menyimpan data sekolah...');
                     const { SchoolModal } = await import('./modals/school-modal.js');
                     await SchoolModal.save(e);
                     break;
@@ -387,6 +473,7 @@ class App {
         } catch (err) {
             console.error('Form submit error:', err);
             toast('Error: ' + err.message, 'error');
+            Loader.hide();
         }
     }
 
@@ -435,13 +522,15 @@ class App {
 }
 
 // ============================================
-// INITIALIZE APP
+// INITIALIZE
 // ============================================
 const app = new App();
 
 // ============================================
-// GLOBAL FUNCTION EXPOSURE (backward compatibility)
+// GLOBAL EXPOSURE
 // ============================================
+window.app = app;
+window.Loader = Loader;
 window.handleLogin = (e) => app.handleLogin(e);
 window.logout = () => { auth.logout(); location.reload(); };
 window.showSummary = () => app.showSummary();
@@ -456,6 +545,7 @@ window.openZoom = (src) => app.openZoom(src);
 window.savePeriod = async (e) => {
     e.preventDefault();
     if (!app.requireSuperadmin()) return;
+    Loader.show('Menyimpan periode...');
     const { PeriodModal } = await import('./modals/period-modal.js');
     await PeriodModal.save(e);
 };
@@ -463,6 +553,7 @@ window.savePeriod = async (e) => {
 window.saveSchool = async (e) => {
     e.preventDefault();
     if (!app.requireSuperadmin()) return;
+    Loader.show('Menyimpan data sekolah...');
     const { SchoolModal } = await import('./modals/school-modal.js');
     await SchoolModal.save(e);
 };
@@ -482,13 +573,14 @@ window.deletePeriod = async (id) => {
     if (!app.requireSuperadmin()) return;
     if (!confirm('Hapus periode ini?')) return;
     try {
+        Loader.show('Menghapus...');
         const { PeriodService } = await import('./services/period-service.js');
         await PeriodService.delete(id);
-        toast('Periode dihapus', 'success');
-        await state.loadPeriods();
-        app.showSummary();
+        toast('Periode dihapus 💕', 'success');
+        await app.refreshAndShow('summary');
     } catch (err) {
         toast('Gagal: ' + err.message, 'error');
+        Loader.hide();
     }
 };
 
@@ -507,7 +599,7 @@ window.editSchool = async (schoolData) => {
         const { SchoolModal } = await import('./modals/school-modal.js');
         SchoolModal.open(school);
     } catch (err) {
-        toast('Error parsing data: ' + err.message, 'error');
+        toast('Error: ' + err.message, 'error');
     }
 };
 
@@ -518,13 +610,14 @@ window.deleteSchool = async (schoolData) => {
             ? JSON.parse(schoolData.replace(/&quot;/g, '"')) 
             : schoolData;
         if (!confirm(`Hapus ${school.sekolah_name}?`)) return;
+        Loader.show('Menghapus...');
         const { SchoolService } = await import('./services/school-service.js');
         await SchoolService.delete(school.id, school.transfer_proof_path);
-        toast('Data dihapus', 'success');
-        await state.loadPeriods();
-        app.showPeriod(state.currentPeriodIdx);
+        toast('Data dihapus 💕', 'success');
+        await app.refreshAndShow('period');
     } catch (err) {
         toast('Gagal: ' + err.message, 'error');
+        Loader.hide();
     }
 };
 
@@ -575,7 +668,12 @@ window.ViewersModal = {
 
 setInterval(() => {
     if (auth.isAuthenticated()) {
-        state.loadPeriods().catch(() => {});
+        state.loadPeriods().then(() => {
+            // Silent refresh untuk view aktif
+            const view = app.getCurrentView();
+            if (view === 'summary') SummaryView.render();
+            else if (view === 'period') PeriodView.render(state.currentPeriodIdx);
+        }).catch(() => {});
     }
 }, 60000);
 
