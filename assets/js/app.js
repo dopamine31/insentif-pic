@@ -1,5 +1,6 @@
 // ============================================
-// MAIN APPLICATION - OPTIMIZED
+// MAIN APPLICATION
+// FEATURE: Swipe navigation handlers + Keyboard shortcuts
 // ============================================
 
 import { auth } from './auth.js';
@@ -33,6 +34,7 @@ class App {
     constructor() {
         this.initAuth();
         this.initEventDelegation();
+        this.initKeyboardShortcuts();
     }
 
     initAuth() {
@@ -185,10 +187,6 @@ class App {
         }
     }
 
-    // ============================================
-    // NAVIGATION - DENGAN AUTO-RENDER
-    // ============================================
-
     showSummary() {
         document.getElementById('viewSummary').classList.remove('hidden');
         document.getElementById('viewPeriod').classList.add('hidden');
@@ -222,10 +220,6 @@ class App {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ============================================
-    // REFRESH CURRENT VIEW - FIX BUG
-    // ============================================
-    
     async refreshAndShow(viewName) {
         Loader.show('Memperbarui data...');
         try {
@@ -235,7 +229,6 @@ class App {
             } else if (viewName === 'period') {
                 this.showPeriod(state.currentPeriodIdx);
             } else if (viewName === 'detail') {
-                // Re-render detail dengan data terbaru
                 const school = state.currentSchool;
                 if (school) {
                     const updatedSchool = this.findSchoolById(school.id);
@@ -263,6 +256,7 @@ class App {
 
     // ============================================
     // EVENT DELEGATION
+    // FIX: Cek apakah target adalah tombol di dalam card sebelum trigger show-period
     // ============================================
 
     initEventDelegation() {
@@ -270,11 +264,29 @@ class App {
             const target = e.target.closest('[data-action]');
             if (!target) return;
             
-            e.stopPropagation();
             const action = target.dataset.action;
-            const id = target.dataset.id;
             
-            await this.handleAction(action, id, target);
+            // PENTING: Jika action adalah edit/delete/jenis action spesifik, 
+            // jangan propagate ke parent card
+            const specificActions = [
+                'edit-period', 'delete-period',
+                'edit-school', 'delete-school',
+                'nav-prev', 'nav-next', 'nav-goto',
+                'close-modal', 'close-zoom', 'close-pin-display',
+                'logout', 'retry-load',
+                'open-period-modal', 'open-school-modal', 'open-viewers-modal',
+                'create-viewer', 'reset-viewer-pin', 'toggle-viewer',
+                'edit-viewer-notes', 'delete-viewer', 'refresh-viewers'
+            ];
+            
+            if (specificActions.includes(action)) {
+                e.stopPropagation();
+            }
+            
+            const id = target.dataset.id;
+            const idx = target.dataset.idx;
+            
+            await this.handleAction(action, id, idx, target);
         });
 
         document.addEventListener('submit', async (e) => {
@@ -285,24 +297,51 @@ class App {
             await this.handleFormSubmit(form.dataset.form, e);
         });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeAllModals();
-            }
-        });
-
-        // Click on pin-display-value to copy
+        // PIN display copy to clipboard
         document.getElementById('pinDisplayValue')?.addEventListener('click', () => {
             const pin = document.getElementById('pinDisplayValue').innerText;
             navigator.clipboard.writeText(pin).then(() => {
-                toast('PIN berhasil di-copy!', 'success');
+                toast('PIN berhasil di-copy! 📋', 'success');
             });
         });
     }
 
-    async handleAction(action, id, target) {
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // ESC to close modals
+            if (e.key === 'Escape') {
+                this.closeAllModals();
+                return;
+            }
+            
+            // Arrow navigation di detail view
+            const isDetailView = !document.getElementById('viewDetail').classList.contains('hidden');
+            if (!isDetailView) return;
+            
+            // Ignore jika user sedang mengetik di input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            // Ignore jika modal terbuka
+            const hasOpenModal = document.querySelector('.modal-overlay.active');
+            if (hasOpenModal) return;
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                DetailView.navigate('prev');
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                DetailView.navigate('next');
+            }
+        });
+    }
+
+    async handleAction(action, id, idx, target) {
         try {
             switch (action) {
+                // Period actions
                 case 'open-period-modal':
                     if (!this.requireSuperadmin()) return;
                     const { PeriodModal } = await import('./modals/period-modal.js');
@@ -325,6 +364,7 @@ class App {
                     await this.refreshAndShow('summary');
                     break;
 
+                // School actions
                 case 'open-school-modal':
                     if (!this.requireSuperadmin()) return;
                     const { SchoolModal } = await import('./modals/school-modal.js');
@@ -352,6 +392,23 @@ class App {
                     }
                     break;
 
+                // SWIPE NAVIGATION ACTIONS
+                case 'nav-prev':
+                    DetailView.navigate('prev');
+                    break;
+                    
+                case 'nav-next':
+                    DetailView.navigate('next');
+                    break;
+                    
+                case 'nav-goto':
+                    const gotoIdx = parseInt(idx);
+                    if (!isNaN(gotoIdx)) {
+                        DetailView.navigate(gotoIdx);
+                    }
+                    break;
+
+                // Viewers
                 case 'open-viewers-modal':
                     if (!this.requireSuperadmin()) return;
                     const { ViewersModal } = await import('./modals/viewers-modal.js');
@@ -396,6 +453,7 @@ class App {
                     await VM6.load();
                     break;
 
+                // Modal/UI
                 case 'close-modal':
                     const modalId = target.dataset.modal;
                     if (modalId) this.closeModal(modalId);
@@ -409,13 +467,14 @@ class App {
                     this.closePinDisplay();
                     break;
 
+                // Navigation
                 case 'show-summary':
                     this.showSummary();
                     break;
                     
                 case 'show-period':
-                    const idx = parseInt(target.dataset.idx);
-                    if (!isNaN(idx)) this.showPeriod(idx);
+                    const periodIdx = parseInt(idx);
+                    if (!isNaN(periodIdx)) this.showPeriod(periodIdx);
                     break;
                     
                 case 'show-detail':
@@ -531,6 +590,7 @@ const app = new App();
 // ============================================
 window.app = app;
 window.Loader = Loader;
+window.DetailView = DetailView;
 window.handleLogin = (e) => app.handleLogin(e);
 window.logout = () => { auth.logout(); location.reload(); };
 window.showSummary = () => app.showSummary();
@@ -669,7 +729,6 @@ window.ViewersModal = {
 setInterval(() => {
     if (auth.isAuthenticated()) {
         state.loadPeriods().then(() => {
-            // Silent refresh untuk view aktif
             const view = app.getCurrentView();
             if (view === 'summary') SummaryView.render();
             else if (view === 'period') PeriodView.render(state.currentPeriodIdx);
