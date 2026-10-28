@@ -1,17 +1,35 @@
+/* ============================================
+   RESPONSIVE - PINK THEME
+   ============================================ */
+
 @media (max-width: 768px) {
-    body { padding: 12px; font-size: 16px; }
+    body { 
+        padding: 12px; 
+        font-size: 15px; 
+    }
     
     .app-header {
         flex-direction: column;
         text-align: center;
-        padding: 18px;
+        padding: 20px;
+        gap: 12px;
     }
     
-    .app-header h1 { font-size: 20px; }
+    .app-header::before {
+        height: 3px;
+    }
     
-    .header-right {
-        align-items: flex-start;
-        width: 100%;
+    .app-header h1 { 
+        font-size: 22px; 
+    }
+    
+    .header-brand {
+        align-items: center;
+    }
+    
+    .header-right { 
+        align-items: center; 
+        width: 100%; 
     }
     
     .header-actions {
@@ -21,8 +39,8 @@
     
     .summary-total {
         grid-template-columns: 1fr;
-        gap: 15px;
-        padding: 22px;
+        gap: 16px;
+        padding: 24px 20px;
     }
     
     .total-item .value { font-size: 24px; }
@@ -30,7 +48,7 @@
     
     .card-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 14px;
     }
     
     .detail-wrapper {
@@ -39,40 +57,65 @@
     
     .detail-left {
         border-right: none;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--primary-lightest);
+        padding: 20px;
+    }
+    
+    .detail-right {
+        padding: 20px;
     }
     
     .detail-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: 4px;
+        gap: 6px;
     }
     
     .detail-value {
         text-align: left;
+        max-width: 100%;
+        width: 100%;
     }
     
     .form-row {
         grid-template-columns: 1fr;
+        gap: 0;
     }
     
     .pin-card {
-        padding: 30px 22px;
+        padding: 32px 24px;
+    }
+    
+    .pin-icon {
+        width: 72px;
+        height: 72px;
+        font-size: 36px;
+    }
+    
+    .pin-title {
+        font-size: 24px;
     }
     
     .pin-input {
-        font-size: 20px;
-        letter-spacing: 6px;
+        font-size: 22px;
+        letter-spacing: 8px;
+        padding: 16px;
     }
     
     .pin-display-value {
-        font-size: 40px;
-        letter-spacing: 8px;
-        padding: 18px;
+        font-size: 42px;
+        letter-spacing: 10px;
+        padding: 22px;
+    }
+    
+    .pin-display-value::after {
+        font-size: 10px;
+        bottom: -20px;
     }
     
     .breadcrumb {
         font-size: 12px;
+        padding: 12px 16px;
     }
     
     .modal-overlay {
@@ -80,7 +123,7 @@
     }
     
     .modal-form {
-        padding: 22px;
+        padding: 24px 20px;
     }
     
     .modal-large {
@@ -89,6 +132,13 @@
     
     .btn {
         padding: 12px 16px;
+        font-size: 13px;
+    }
+    
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
     
     .toast-notification {
@@ -96,6 +146,7 @@
         right: 12px;
         left: 12px;
         min-width: auto;
+        max-width: none;
     }
     
     .viewers-table {
@@ -104,14 +155,150 @@
     
     .viewers-table th,
     .viewers-table td {
-        padding: 6px;
+        padding: 8px 6px;
     }
     
-    .period-card h3 { font-size: 15px; }
-    .detail-header h2 { font-size: 17px; }
+    .period-card h3 { 
+        font-size: 16px; 
+    }
+    
+    .detail-header h2 { 
+        font-size: 19px; 
+    }
+    
+    .detail-header {
+        padding: 20px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+    }
+    
+    .section-title::after {
+        width: 50px;
+    }
+    
+    body[data-role="superadmin"] .app-header::after,
+    body[data-role="viewer"] .app-header::after {
+        font-size: 10px;
+        padding: 5px;
+        margin: 12px -20px -20px;
+    }
+    
+    .global-loader .loader-content {
+        padding: 30px 24px;
+        min-width: 240px;
+    }
+    
+    .loader-heart {
+        font-size: 40px;
+    }
+    
+    .loader-text {
+        font-size: 14px;
+    }
+    
+    .empty-state {
+        padding: 40px 20px;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+    }
 }
 
 @media (max-width: 480px) {
-    .app-header h1 { font-size: 18px; }
-    .pin-display-value { font-size: 32px; letter-spacing: 6px; }
+    body { padding: 10px; }
+    
+    .app-header h1 { 
+        font-size: 19px; 
+    }
+    
+    .header-subtitle {
+        font-size: 11px;
+    }
+    
+    .pin-display-value { 
+        font-size: 32px; 
+        letter-spacing: 6px; 
+        padding: 18px;
+    }
+    
+    .pin-input {
+        font-size: 20px;
+        letter-spacing: 6px;
+    }
+    
+    .summary-total {
+        padding: 20px 16px;
+    }
+    
+    .total-item .label {
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+    
+    .total-item .value {
+        font-size: 20px;
+    }
+    
+    .total-item.nominal .value {
+        font-size: 22px;
+    }
+    
+    .modal-form {
+        padding: 20px 16px;
+    }
+    
+    .modal-form h3 {
+        font-size: 18px;
+    }
+}
+
+/* Landscape phones */
+@media (max-height: 600px) and (orientation: landscape) {
+    .pin-overlay {
+        align-items: flex-start;
+        padding: 20px;
+    }
+    
+    .pin-card {
+        padding: 24px;
+    }
+    
+    .pin-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+        margin-bottom: 16px;
+    }
+    
+    .pin-title {
+        font-size: 20px;
+    }
+}
+
+/* Desktop wide screens */
+@media (min-width: 1400px) {
+    .app-container {
+        max-width: 1400px;
+    }
+    
+    .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+    /* Keep light theme - pink design is light-only for brand consistency */
 }
