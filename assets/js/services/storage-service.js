@@ -1,5 +1,5 @@
 // ============================================
-// STORAGE SERVICE - Upload/Delete Files
+// STORAGE SERVICE
 // ============================================
 import { getSupabase } from '../supabase-client.js';
 

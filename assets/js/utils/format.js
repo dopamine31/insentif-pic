@@ -19,6 +19,16 @@ export function formatDate(dateStr) {
     }
 }
 
+export function formatDateTime(ts) {
+    if (!ts) return '-';
+    try {
+        const d = new Date(ts);
+        return d.toLocaleString('id-ID');
+    } catch {
+        return '-';
+    }
+}
+
 export function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -27,10 +37,4 @@ export function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-}
-
-export function formatDateTime(ts) {
-    if (!ts) return '-';
-    const d = new Date(ts);
-    return d.toLocaleString('id-ID');
 }

@@ -4,7 +4,6 @@
 import { getSupabase } from '../supabase-client.js';
 import { auth } from '../auth.js';
 import { hashPin, generatePin } from '../utils/crypto.js';
-import { toast } from '../utils/toast.js';
 
 export const ViewerService = {
     async _checkSuperadmin() {
@@ -13,9 +12,6 @@ export const ViewerService = {
         }
     },
 
-    /**
-     * Get all viewers
-     */
     async getAll() {
         await this._checkSuperadmin();
         const supabase = getSupabase();
@@ -29,9 +25,6 @@ export const ViewerService = {
         return data || [];
     },
 
-    /**
-     * Create new viewer with auto-generated PIN
-     */
     async create(notes = '') {
         await this._checkSuperadmin();
         const supabase = getSupabase();
@@ -58,13 +51,10 @@ export const ViewerService = {
         
         return {
             viewer: data,
-            pin: pin  // Return plain PIN untuk ditampilkan ke user
+            pin: pin
         };
     },
 
-    /**
-     * Reset PIN viewer
-     */
     async resetPin(id) {
         await this._checkSuperadmin();
         const supabase = getSupabase();
@@ -88,9 +78,6 @@ export const ViewerService = {
         };
     },
 
-    /**
-     * Toggle viewer active status
-     */
     async toggleActive(id, isActive) {
         await this._checkSuperadmin();
         const supabase = getSupabase();
@@ -107,9 +94,6 @@ export const ViewerService = {
         return data;
     },
 
-    /**
-     * Update viewer notes
-     */
     async updateNotes(id, notes) {
         await this._checkSuperadmin();
         const supabase = getSupabase();
@@ -126,9 +110,6 @@ export const ViewerService = {
         return data;
     },
 
-    /**
-     * Delete viewer
-     */
     async delete(id) {
         await this._checkSuperadmin();
         const supabase = getSupabase();

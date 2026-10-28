@@ -1,7 +1,6 @@
 // ============================================
 // DETAIL VIEW - RENDER SINGLE SCHOOL
 // ============================================
-
 import { state } from '../state.js';
 import { auth } from '../auth.js';
 import { formatRupiah, formatDate, escapeHtml } from '../utils/format.js';

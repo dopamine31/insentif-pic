@@ -1,7 +1,6 @@
 // ============================================
 // SCHOOL MODAL - CREATE/EDIT FORM + UPLOAD
 // ============================================
-
 import { SchoolService } from '../services/school-service.js';
 import { state } from '../state.js';
 import { toast } from '../utils/toast.js';

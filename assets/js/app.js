@@ -9,7 +9,7 @@ import { SummaryView } from './views/summary-view.js';
 import { PeriodView } from './views/period-view.js';
 import { DetailView } from './views/detail-view.js';
 import { toast } from './utils/toast.js';
-import { formatRupiah, escapeHtml, formatDate, formatDateTime } from './utils/format.js';
+import { escapeHtml } from './utils/format.js';
 
 // ============================================
 // MAIN APP CLASS
@@ -20,9 +20,6 @@ class App {
         this.initEventDelegation();
     }
 
-    /**
-     * Initialize authentication state
-     */
     initAuth() {
         if (auth.isAuthenticated()) {
             this.unlockApp();
@@ -31,9 +28,6 @@ class App {
         }
     }
 
-    /**
-     * Show PIN login screen
-     */
     showPinScreen() {
         document.getElementById('pinOverlay').classList.remove('unlocked');
         document.getElementById('mainContainer').style.display = 'none';
@@ -43,9 +37,6 @@ class App {
         }
     }
 
-    /**
-     * Start countdown timer for lockout
-     */
     startLockTimer() {
         const timer = setInterval(() => {
             if (!auth.isLocked()) {
@@ -67,16 +58,12 @@ class App {
         }, 1000);
     }
 
-    /**
-     * Handle PIN login submission
-     */
     async handleLogin(e) {
         e.preventDefault();
         const pin = document.getElementById('pinInput').value.trim();
         const msgEl = document.getElementById('pinMessage');
         const submitBtn = document.getElementById('pinSubmit');
 
-        // Validation
         if (!/^\d{4}$/.test(pin)) {
             msgEl.innerText = '⚠️ PIN harus 4 digit angka';
             msgEl.className = 'pin-message error';
@@ -112,9 +99,6 @@ class App {
         }
     }
 
-    /**
-     * Unlock app after successful login
-     */
     async unlockApp() {
         document.getElementById('pinOverlay').classList.add('unlocked');
         document.getElementById('mainContainer').style.display = 'block';
@@ -129,7 +113,7 @@ class App {
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     ${roleBadge}
                     ${user.notes ? `<span style="opacity:0.8; font-size:11px;">${escapeHtml(user.notes)}</span>` : ''}
-                    <button class="btn btn-sm btn-secondary" onclick="window.logout()">Logout</button>
+                    <button class="btn btn-sm btn-secondary" data-action="logout">Logout</button>
                 </div>
             `;
             
@@ -140,9 +124,6 @@ class App {
         await this.loadData();
     }
 
-    /**
-     * Render header actions berdasarkan role
-     */
     renderHeaderActions() {
         const actions = document.getElementById('headerActions');
         if (auth.isSuperadmin()) {
@@ -164,9 +145,6 @@ class App {
         }
     }
 
-    /**
-     * Load periods data dari Supabase
-     */
     async loadData() {
         try {
             await state.loadPeriods();
@@ -182,10 +160,6 @@ class App {
             `;
         }
     }
-
-    // ============================================
-    // NAVIGATION METHODS
-    // ============================================
 
     showSummary() {
         document.getElementById('viewSummary').classList.remove('hidden');
@@ -217,11 +191,10 @@ class App {
     }
 
     // ============================================
-    // EVENT DELEGATION (Professional Pattern)
+    // EVENT DELEGATION
     // ============================================
 
     initEventDelegation() {
-        // Click delegation untuk semua button dengan data-action
         document.addEventListener('click', async (e) => {
             const target = e.target.closest('[data-action]');
             if (!target) return;
@@ -233,7 +206,6 @@ class App {
             await this.handleAction(action, id, target);
         });
 
-        // Form submit delegation
         document.addEventListener('submit', async (e) => {
             const form = e.target.closest('form[data-form]');
             if (!form) return;
@@ -242,7 +214,6 @@ class App {
             await this.handleFormSubmit(form.dataset.form, e);
         });
 
-        // ESC key untuk close modal
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeAllModals();
@@ -250,13 +221,9 @@ class App {
         });
     }
 
-    /**
-     * Handle click action berdasarkan data-action
-     */
     async handleAction(action, id, target) {
         try {
             switch (action) {
-                // Period actions
                 case 'open-period-modal':
                     if (!this.requireSuperadmin()) return;
                     const { PeriodModal } = await import('./modals/period-modal.js');
@@ -279,7 +246,6 @@ class App {
                     this.showSummary();
                     break;
 
-                // School actions
                 case 'open-school-modal':
                     if (!this.requireSuperadmin()) return;
                     const { SchoolModal } = await import('./modals/school-modal.js');
@@ -307,7 +273,6 @@ class App {
                     }
                     break;
 
-                // Viewer actions
                 case 'open-viewers-modal':
                     if (!this.requireSuperadmin()) return;
                     const { ViewersModal } = await import('./modals/viewers-modal.js');
@@ -352,7 +317,6 @@ class App {
                     await VM6.load();
                     break;
 
-                // Modal close
                 case 'close-modal':
                     const modalId = target.dataset.modal;
                     if (modalId) this.closeModal(modalId);
@@ -366,7 +330,6 @@ class App {
                     this.closePinDisplay();
                     break;
 
-                // Navigation
                 case 'show-summary':
                     this.showSummary();
                     break;
@@ -402,9 +365,6 @@ class App {
         }
     }
 
-    /**
-     * Handle form submission berdasarkan data-form
-     */
     async handleFormSubmit(formType, e) {
         try {
             switch (formType) {
@@ -430,13 +390,6 @@ class App {
         }
     }
 
-    // ============================================
-    // HELPER METHODS
-    // ============================================
-
-    /**
-     * Check if current user is superadmin, show toast if not
-     */
     requireSuperadmin() {
         if (!auth.isSuperadmin()) {
             toast('⛔ Hanya Superadmin yang dapat melakukan aksi ini', 'warning');
@@ -445,9 +398,6 @@ class App {
         return true;
     }
 
-    /**
-     * Find school by ID across all periods
-     */
     findSchoolById(id) {
         for (const p of state.periods) {
             const school = (p.schools || []).find(s => s.id === id);
@@ -456,9 +406,6 @@ class App {
         return null;
     }
 
-    /**
-     * Close all open modals
-     */
     closeAllModals() {
         this.closeZoom();
         this.closePinDisplay();
@@ -467,33 +414,21 @@ class App {
         });
     }
 
-    /**
-     * Close specific modal
-     */
     closeModal(id) {
         const modal = document.getElementById(id);
         if (modal) modal.classList.remove('active');
     }
 
-    /**
-     * Open zoom modal for image
-     */
     openZoom(src) {
         document.getElementById('zoomImg').src = src;
         document.getElementById('zoomModal').classList.add('active');
     }
 
-    /**
-     * Close zoom modal
-     */
     closeZoom() {
         document.getElementById('zoomModal').classList.remove('active');
         document.getElementById('zoomImg').src = '';
     }
 
-    /**
-     * Close PIN display modal
-     */
     closePinDisplay() {
         document.getElementById('pinDisplayModal').classList.remove('active');
     }
@@ -506,24 +441,18 @@ const app = new App();
 
 // ============================================
 // GLOBAL FUNCTION EXPOSURE (backward compatibility)
-// Untuk inline onclick/onsubmit di HTML lama
 // ============================================
-
-// Auth & Navigation
 window.handleLogin = (e) => app.handleLogin(e);
 window.logout = () => { auth.logout(); location.reload(); };
 window.showSummary = () => app.showSummary();
 window.showPeriod = (idx) => app.showPeriod(idx);
 window.showDetail = (school) => app.showDetail(school);
 window.backToPeriod = () => app.backToPeriod();
-
-// Modal handlers
 window.closeModal = (id) => app.closeModal(id);
 window.closeZoom = () => app.closeZoom();
 window.closePinDisplay = () => app.closePinDisplay();
 window.openZoom = (src) => app.openZoom(src);
 
-// Form handlers (untuk onsubmit di HTML)
 window.savePeriod = async (e) => {
     e.preventDefault();
     if (!app.requireSuperadmin()) return;
@@ -543,7 +472,6 @@ window.previewFile = async (e) => {
     SchoolModal.previewFile(e);
 };
 
-// Period CRUD (backward compatibility)
 window.openPeriodModal = async (id = null) => {
     if (!app.requireSuperadmin()) return;
     const { PeriodModal } = await import('./modals/period-modal.js');
@@ -564,7 +492,6 @@ window.deletePeriod = async (id) => {
     }
 };
 
-// School CRUD (backward compatibility dengan JSON parsing)
 window.openSchoolModal = async (school = null) => {
     if (!app.requireSuperadmin()) return;
     const { SchoolModal } = await import('./modals/school-modal.js');
@@ -601,7 +528,6 @@ window.deleteSchool = async (schoolData) => {
     }
 };
 
-// Viewers Management (backward compatibility)
 window.openViewersModal = async () => {
     if (!app.requireSuperadmin()) return;
     const { ViewersModal } = await import('./modals/viewers-modal.js');
@@ -640,7 +566,6 @@ window.deleteViewer = async (id) => {
     await ViewersModal.delete(id);
 };
 
-// Expose ViewersModal.load untuk refresh button
 window.ViewersModal = {
     load: async () => {
         const { ViewersModal } = await import('./modals/viewers-modal.js');
@@ -648,16 +573,10 @@ window.ViewersModal = {
     }
 };
 
-// ============================================
-// AUTO-REFRESH DATA (setiap 60 detik)
-// ============================================
 setInterval(() => {
     if (auth.isAuthenticated()) {
         state.loadPeriods().catch(() => {});
     }
 }, 60000);
 
-// ============================================
-// EXPORT UNTUK MODULE LAIN (jika diperlukan)
-// ============================================
 export { app, auth, state };

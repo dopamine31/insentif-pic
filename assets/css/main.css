@@ -1,6 +1,3 @@
-/* ============================================
-   GLOBAL RESET & VARIABLES
-   ============================================ */
 :root {
     --primary: #667eea;
     --primary-dark: #5568d3;
@@ -46,9 +43,6 @@ body {
 
 .hidden { display: none !important; }
 
-/* ============================================
-   HEADER
-   ============================================ */
 .app-header {
     background: rgba(255,255,255,0.15);
     backdrop-filter: blur(10px);
@@ -62,6 +56,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
+    position: relative;
 }
 
 .app-header h1 {
@@ -69,13 +64,41 @@ body {
     font-weight: 700;
 }
 
-.app-header .user-info {
+.header-subtitle {
     font-size: 13px;
     opacity: 0.9;
+    margin-top: 4px;
+}
+
+.header-brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
 }
 
 .header-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.user-info {
+    font-size: 13px;
+}
+
+.section-title {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.required {
+    color: var(--danger);
 }

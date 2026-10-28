@@ -34,7 +34,6 @@ class AppState {
             
             if (error) throw error;
             
-            // Sort schools by no_urut
             this.periods = (data || []).map(p => ({
                 ...p,
                 schools: (p.schools || []).sort((a, b) => (a.no_urut || 0) - (b.no_urut || 0))

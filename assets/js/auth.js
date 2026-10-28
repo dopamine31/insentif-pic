@@ -21,7 +21,6 @@ export class AuthManager {
             const inputHash = await hashPin(pin);
             const supabase = getSupabase();
             
-            // Query by pin_hash only
             const { data, error } = await supabase
                 .from('admins')
                 .select('id, username, role, notes')
@@ -40,12 +39,10 @@ export class AuthManager {
                 };
             }
 
-            // Update last login
             await supabase.from('admins')
                 .update({ last_login: new Date().toISOString() })
                 .eq('id', data.id);
 
-            // Simpan session
             sessionStorage.setItem(APP_CONFIG.sessionKey, JSON.stringify({
                 userId: data.id,
                 username: data.username,

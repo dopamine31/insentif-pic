@@ -1,7 +1,3 @@
-/* ============================================
-   VIEW-SPECIFIC STYLES
-   ============================================ */
-
 /* PIN OVERLAY */
 .pin-overlay {
     position: fixed;
@@ -63,6 +59,46 @@
     margin-bottom: 25px;
 }
 
+.pin-info-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #555;
+    text-align: left;
+}
+
+.pin-info-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.pin-info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0;
+}
+
+.pin-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+}
+
+.pin-badge-sa {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.pin-badge-viewer {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
 .pin-input {
     width: 100%;
     padding: 16px;
@@ -102,6 +138,18 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     font-family: inherit;
+    transition: all 0.2s;
+}
+
+.pin-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.pin-hint {
+    font-size: 11px;
+    color: #95a5a6;
+    margin-top: 15px;
 }
 
 /* SUMMARY VIEW */
@@ -138,11 +186,11 @@
     color: var(--success);
 }
 
-.section-title {
-    color: white;
-    font-size: 18px;
-    margin-bottom: 15px;
-    text-align: center;
+/* CARD GRID */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
 }
 
 /* PERIOD CARD */
@@ -189,6 +237,14 @@
     border-top: 1px dashed #eee;
 }
 
+.period-card .card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+}
+
 /* SCHOOL CARD */
 .school-card {
     background: white;
@@ -225,7 +281,26 @@
     font-size: 14px;
 }
 
+.school-card .card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+}
+
 /* DETAIL VIEW */
+.view-toolbar {
+    margin-bottom: 15px;
+}
+
+.action-bar {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .detail-header {
     background: white;
     padding: 22px 25px;

@@ -3,10 +3,19 @@
 // ============================================
 import { getSupabase } from '../supabase-client.js';
 import { state } from '../state.js';
+import { auth } from '../auth.js';
 import { StorageService } from './storage-service.js';
 
 export const SchoolService = {
+    async _checkSuperadmin() {
+        if (!auth.isSuperadmin()) {
+            throw new Error('Akses ditolak: hanya Superadmin');
+        }
+    },
+
     async create(data, file = null) {
+        await this._checkSuperadmin();
+        
         let proofUrl = null;
         let proofPath = null;
 
@@ -35,11 +44,12 @@ export const SchoolService = {
     },
 
     async update(id, data, file = null, existingPath = null) {
+        await this._checkSuperadmin();
+        
         let proofUrl = data.transfer_proof_url || null;
         let proofPath = existingPath || null;
 
         if (file) {
-            // Hapus file lama jika ada
             if (existingPath) {
                 await StorageService.delete(existingPath);
             }
@@ -68,6 +78,8 @@ export const SchoolService = {
     },
 
     async delete(id, proofPath = null) {
+        await this._checkSuperadmin();
+        
         if (proofPath) {
             await StorageService.delete(proofPath);
         }

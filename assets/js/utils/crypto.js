@@ -6,8 +6,6 @@ const GLOBAL_SALT = 'pic_incentive:';
 
 /**
  * Hash string dengan SHA-256
- * @param {string} text 
- * @returns {Promise<string>} hex string
  */
 export async function sha256(text) {
     const encoder = new TextEncoder();
@@ -19,8 +17,6 @@ export async function sha256(text) {
 
 /**
  * Hash PIN dengan global salt
- * @param {string} pin - 4 digit PIN
- * @returns {Promise<string>} hex hash
  */
 export async function hashPin(pin) {
     const salted = `${GLOBAL_SALT}${pin}`;
@@ -29,7 +25,6 @@ export async function hashPin(pin) {
 
 /**
  * Generate random 4-digit PIN (1000-9999)
- * @returns {string} 4 digit string
  */
 export function generatePin() {
     return String(Math.floor(1000 + Math.random() * 9000));

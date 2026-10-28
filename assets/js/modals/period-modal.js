@@ -1,12 +1,18 @@
 // ============================================
-// PERIOD MODAL (CREATE/EDIT)
+// PERIOD MODAL - CREATE/EDIT FORM
 // ============================================
 import { PeriodService } from '../services/period-service.js';
 import { state } from '../state.js';
 import { toast } from '../utils/toast.js';
+import { auth } from '../auth.js';
 
 export const PeriodModal = {
     open(id = null) {
+        if (!auth.isSuperadmin()) {
+            toast('⛔ Hanya Superadmin', 'warning');
+            return;
+        }
+
         const modal = document.getElementById('periodModal');
         const form = modal.querySelector('form');
         form.reset();
@@ -33,6 +39,12 @@ export const PeriodModal = {
 
     async save(e) {
         e.preventDefault();
+        
+        if (!auth.isSuperadmin()) {
+            toast('⛔ Hanya Superadmin', 'warning');
+            return;
+        }
+
         const id = document.getElementById('periodId').value;
         const payload = {
             name: document.getElementById('periodName').value.trim(),
@@ -61,6 +73,7 @@ export const PeriodModal = {
             }
 
             document.getElementById('periodModal').classList.remove('active');
+            await state.loadPeriods();
         } catch (err) {
             toast('Gagal menyimpan: ' + err.message, 'error');
         } finally {
@@ -70,7 +83,3 @@ export const PeriodModal = {
         }
     }
 };
-
-// Expose ke window
-window.savePeriod = (e) => PeriodModal.save(e);
-window.closeModal = (id) => document.getElementById(id).classList.remove('active');

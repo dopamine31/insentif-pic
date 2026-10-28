@@ -1,7 +1,6 @@
 // ============================================
 // SUMMARY VIEW - RENDER PERIODS LIST
 // ============================================
-
 import { state } from '../state.js';
 import { auth } from '../auth.js';
 import { formatRupiah, escapeHtml } from '../utils/format.js';

@@ -1,7 +1,6 @@
 // ============================================
 // VIEWERS MANAGEMENT MODAL
 // ============================================
-
 import { ViewerService } from '../services/viewer-service.js';
 import { toast } from '../utils/toast.js';
 import { auth } from '../auth.js';
