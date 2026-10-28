@@ -1,5 +1,5 @@
 // ============================================
-// SCHOOL CRUD SERVICE
+// SCHOOL SERVICE
 // ============================================
 import { getSupabase } from '../supabase-client.js';
 import { state } from '../state.js';
@@ -39,7 +39,6 @@ export const SchoolService = {
             .single();
 
         if (error) throw error;
-        await state.loadPeriods();
         return inserted;
     },
 
@@ -73,7 +72,6 @@ export const SchoolService = {
             .single();
 
         if (error) throw error;
-        await state.loadPeriods();
         return updated;
     },
 
@@ -91,6 +89,5 @@ export const SchoolService = {
             .eq('id', id);
 
         if (error) throw error;
-        await state.loadPeriods();
     }
 };
