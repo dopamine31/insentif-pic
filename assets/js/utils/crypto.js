@@ -1,5 +1,5 @@
 // ============================================
-// CRYPTO UTILITIES - LENGKAP
+// CRYPTO UTILITIES
 // ============================================
 
 const GLOBAL_SALT = 'pic_incentive:';
