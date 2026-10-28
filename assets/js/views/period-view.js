@@ -1,9 +1,10 @@
 // ============================================
-// PERIOD VIEW (LIST SCHOOLS)
+// PERIOD VIEW - RENDER SCHOOLS LIST
 // ============================================
+
 import { state } from '../state.js';
+import { auth } from '../auth.js';
 import { formatRupiah, escapeHtml } from '../utils/format.js';
-import { SchoolModal } from '../modals/school-modal.js';
 
 export const PeriodView = {
     render(idx) {
@@ -13,10 +14,17 @@ export const PeriodView = {
         const totalNom = (p.schools || []).reduce((a, s) => a + (Number(s.nominal) || 0), 0);
         
         document.getElementById('breadcrumbPeriod').innerHTML = `
-            <a onclick="window.showSummary()">🏠 Summary</a>
+            <a data-action="show-summary">🏠 Summary</a>
             <span class="sep">›</span>
             <span class="current">📅 ${escapeHtml(p.name)}</span>
         `;
+
+        const editorActions = auth.isSuperadmin() ? `
+            <div class="card-actions">
+                <button class="btn btn-icon edit" data-action="edit-period" data-id="${p.id}" title="Edit">✏️</button>
+                <button class="btn btn-icon delete" data-action="delete-period" data-id="${p.id}" title="Hapus">🗑️</button>
+            </div>
+        ` : '';
 
         document.getElementById('periodHeader').innerHTML = `
             <div>
@@ -27,33 +35,38 @@ export const PeriodView = {
                     ${p.description ? ' • ' + escapeHtml(p.description) : ''}
                 </p>
             </div>
-            <div class="card-actions">
-                <button class="btn btn-icon edit" onclick="window.editCurrentPeriod()" title="Edit">✏️</button>
-                <button class="btn btn-icon delete" onclick="window.deleteCurrentPeriod()" title="Hapus">🗑️</button>
-            </div>
+            ${editorActions}
         `;
 
+        document.getElementById('periodActions').innerHTML = auth.isSuperadmin() 
+            ? '<button class="btn btn-primary" data-action="open-school-modal">➕ Tambah Sekolah</button>'
+            : '<div style="background:rgba(255,255,255,0.2); color:white; padding:10px 16px; border-radius:8px; font-size:13px;">👁️ Mode Viewer — Read Only</div>';
+
         const list = document.getElementById('schoolList');
+        
         if (!p.schools || !p.schools.length) {
             list.innerHTML = `
                 <div class="loading">
                     Belum ada data sekolah di periode ini.<br>
-                    <button class="btn btn-primary btn-sm" onclick="window.openSchoolModal()" style="margin-top:15px;">
-                        ➕ Tambah Sekolah Pertama
-                    </button>
+                    ${auth.isSuperadmin() 
+                        ? '<button class="btn btn-primary btn-sm" data-action="open-school-modal" style="margin-top:15px;">➕ Tambah Sekolah Pertama</button>'
+                        : '<small style="color:var(--gray);">🔒 Login sebagai <b>Superadmin</b> untuk menambah data</small>'}
                 </div>
             `;
             return;
         }
 
-        list.innerHTML = p.schools.map((s, i) => {
-            const schoolJson = JSON.stringify(s).replace(/"/g, '&quot;');
+        list.innerHTML = p.schools.map((s) => {
+            const actionButtons = auth.isSuperadmin() ? `
+                <div class="card-actions">
+                    <button class="btn btn-icon edit" data-action="edit-school" data-id="${s.id}" title="Edit">✏️</button>
+                    <button class="btn btn-icon delete" data-action="delete-school" data-id="${s.id}" title="Hapus">🗑️</button>
+                </div>
+            ` : '';
+            
             return `
-                <div class="school-card" onclick='window.showDetail(${schoolJson})'>
-                    <div class="card-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-icon edit" onclick='window.editSchool(${schoolJson})' title="Edit">✏️</button>
-                        <button class="btn btn-icon delete" onclick='window.deleteSchool(${schoolJson})' title="Hapus">🗑️</button>
-                    </div>
+                <div class="school-card" data-action="show-detail" data-id="${s.id}">
+                    ${actionButtons}
                     <h4>🏫 ${escapeHtml(s.sekolah_name)}</h4>
                     <div class="info">
                         <span>${escapeHtml(s.bank_name || '')} • ${escapeHtml(s.pic_name || '-')}</span>
@@ -62,56 +75,5 @@ export const PeriodView = {
                 </div>
             `;
         }).join('');
-    }
-};
-
-window.editCurrentPeriod = () => {
-    const p = state.getCurrentPeriod();
-    if (p) {
-        import('../modals/period-modal.js').then(({ PeriodModal }) => {
-            PeriodModal.open(p.id);
-        });
-    }
-};
-
-window.deleteCurrentPeriod = async () => {
-    const p = state.getCurrentPeriod();
-    if (!p) return;
-    if (!confirm('Yakin ingin menghapus periode ini?')) return;
-    try {
-        const { PeriodService } = await import('../services/period-service.js');
-        await PeriodService.delete(p.id);
-        const { toast } = await import('../utils/toast.js');
-        toast('Periode dihapus', 'success');
-        window.showSummary();
-    } catch (err) {
-        const { toast } = await import('../utils/toast.js');
-        toast('Gagal menghapus: ' + err.message, 'error');
-    }
-};
-
-window.openSchoolModal = () => {
-    import('../modals/school-modal.js').then(({ SchoolModal }) => {
-        SchoolModal.open();
-    });
-};
-
-window.editSchool = (school) => {
-    import('../modals/school-modal.js').then(({ SchoolModal }) => {
-        SchoolModal.open(school);
-    });
-};
-
-window.deleteSchool = async (school) => {
-    if (!confirm(`Yakin ingin menghapus data ${school.sekolah_name}?`)) return;
-    try {
-        const { SchoolService } = await import('../services/school-service.js');
-        await SchoolService.delete(school.id, school.transfer_proof_path);
-        const { toast } = await import('../utils/toast.js');
-        toast('Data dihapus', 'success');
-        PeriodView.render(state.currentPeriodIdx);
-    } catch (err) {
-        const { toast } = await import('../utils/toast.js');
-        toast('Gagal menghapus: ' + err.message, 'error');
     }
 };
