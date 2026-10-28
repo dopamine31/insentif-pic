@@ -1,12 +1,5 @@
-/* ============================================
-   RESPONSIVE - PINK THEME
-   ============================================ */
-
 @media (max-width: 768px) {
-    body { 
-        padding: 12px; 
-        font-size: 15px; 
-    }
+    body { padding: 12px; font-size: 15px; }
     
     .app-header {
         flex-direction: column;
@@ -15,27 +8,11 @@
         gap: 12px;
     }
     
-    .app-header::before {
-        height: 3px;
-    }
-    
-    .app-header h1 { 
-        font-size: 22px; 
-    }
-    
-    .header-brand {
-        align-items: center;
-    }
-    
-    .header-right { 
-        align-items: center; 
-        width: 100%; 
-    }
-    
-    .header-actions {
-        width: 100%;
-        justify-content: center;
-    }
+    .app-header::before { height: 3px; }
+    .app-header h1 { font-size: 22px; }
+    .header-brand { align-items: center; }
+    .header-right { align-items: center; width: 100%; }
+    .header-actions { width: 100%; justify-content: center; }
     
     .summary-total {
         grid-template-columns: 1fr;
@@ -51,9 +28,7 @@
         gap: 14px;
     }
     
-    .detail-wrapper {
-        grid-template-columns: 1fr;
-    }
+    .detail-wrapper { grid-template-columns: 1fr; }
     
     .detail-left {
         border-right: none;
@@ -61,9 +36,7 @@
         padding: 20px;
     }
     
-    .detail-right {
-        padding: 20px;
-    }
+    .detail-right { padding: 20px; }
     
     .detail-row {
         flex-direction: column;
@@ -77,30 +50,12 @@
         width: 100%;
     }
     
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 0;
-    }
+    .form-row { grid-template-columns: 1fr; gap: 0; }
     
-    .pin-card {
-        padding: 32px 24px;
-    }
-    
-    .pin-icon {
-        width: 72px;
-        height: 72px;
-        font-size: 36px;
-    }
-    
-    .pin-title {
-        font-size: 24px;
-    }
-    
-    .pin-input {
-        font-size: 22px;
-        letter-spacing: 8px;
-        padding: 16px;
-    }
+    .pin-card { padding: 32px 24px; }
+    .pin-icon { width: 72px; height: 72px; font-size: 36px; }
+    .pin-title { font-size: 24px; }
+    .pin-input { font-size: 22px; letter-spacing: 8px; padding: 16px; }
     
     .pin-display-value {
         font-size: 42px;
@@ -108,75 +63,26 @@
         padding: 22px;
     }
     
-    .pin-display-value::after {
-        font-size: 10px;
-        bottom: -20px;
-    }
-    
-    .breadcrumb {
-        font-size: 12px;
-        padding: 12px 16px;
-    }
-    
-    .modal-overlay {
-        padding: 20px 12px;
-    }
-    
-    .modal-form {
-        padding: 24px 20px;
-    }
-    
-    .modal-large {
-        max-width: 95%;
-    }
-    
-    .btn {
-        padding: 12px 16px;
-        font-size: 13px;
-    }
-    
-    .btn-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
-    }
+    .pin-display-value::after { font-size: 10px; bottom: -20px; }
+    .breadcrumb { font-size: 12px; padding: 12px 16px; }
+    .modal-overlay { padding: 20px 12px; }
+    .modal-form { padding: 24px 20px; }
+    .modal-large { max-width: 95%; }
+    .btn { padding: 12px 16px; font-size: 13px; }
+    .btn-icon { width: 36px; height: 36px; font-size: 14px; }
     
     .toast-notification {
-        bottom: 12px;
-        right: 12px;
-        left: 12px;
-        min-width: auto;
-        max-width: none;
+        bottom: 12px; right: 12px; left: 12px;
+        min-width: auto; max-width: none;
     }
     
-    .viewers-table {
-        font-size: 11px;
-    }
-    
-    .viewers-table th,
-    .viewers-table td {
-        padding: 8px 6px;
-    }
-    
-    .period-card h3 { 
-        font-size: 16px; 
-    }
-    
-    .detail-header h2 { 
-        font-size: 19px; 
-    }
-    
-    .detail-header {
-        padding: 20px;
-    }
-    
-    .section-title {
-        font-size: 18px;
-    }
-    
-    .section-title::after {
-        width: 50px;
-    }
+    .viewers-table { font-size: 11px; }
+    .viewers-table th, .viewers-table td { padding: 8px 6px; }
+    .period-card h3 { font-size: 16px; }
+    .detail-header h2 { font-size: 19px; }
+    .detail-header { padding: 20px; }
+    .section-title { font-size: 18px; }
+    .section-title::after { width: 50px; }
     
     body[data-role="superadmin"] .app-header::after,
     body[data-role="viewer"] .app-header::after {
@@ -190,115 +96,99 @@
         min-width: 240px;
     }
     
-    .loader-heart {
-        font-size: 40px;
+    .loader-heart { font-size: 40px; }
+    .loader-text { font-size: 14px; }
+    .empty-state { padding: 40px 20px; }
+    .empty-state-icon { font-size: 48px; }
+    
+    /* Mobile nav bar compact */
+    .detail-nav-bar {
+        padding: 10px 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     
-    .loader-text {
-        font-size: 14px;
+    .nav-arrow {
+        padding: 8px 14px;
+        font-size: 12px;
     }
     
-    .empty-state {
-        padding: 40px 20px;
+    .nav-arrow-label {
+        font-size: 11px;
     }
     
-    .empty-state-icon {
-        font-size: 48px;
+    .nav-arrow-icon {
+        font-size: 20px;
+    }
+    
+    .nav-counter-current { font-size: 22px; }
+    .nav-counter-total { font-size: 16px; }
+    .nav-counter-hint { display: none; }
+    
+    .nav-dots { gap: 4px; padding: 6px 0; margin-bottom: 10px; }
+    .nav-dot { width: 6px; height: 6px; }
+    .nav-dot.active { width: 18px; }
+    
+    .detail-number {
+        font-size: 10px;
+        padding: 3px 10px;
     }
 }
 
 @media (max-width: 480px) {
     body { padding: 10px; }
+    .app-header h1 { font-size: 19px; }
+    .header-subtitle { font-size: 11px; }
     
-    .app-header h1 { 
-        font-size: 19px; 
-    }
-    
-    .header-subtitle {
-        font-size: 11px;
-    }
-    
-    .pin-display-value { 
-        font-size: 32px; 
-        letter-spacing: 6px; 
+    .pin-display-value {
+        font-size: 32px;
+        letter-spacing: 6px;
         padding: 18px;
     }
     
-    .pin-input {
-        font-size: 20px;
-        letter-spacing: 6px;
+    .pin-input { font-size: 20px; letter-spacing: 6px; }
+    .summary-total { padding: 20px 16px; }
+    .total-item .label { font-size: 10px; letter-spacing: 1px; }
+    .total-item .value { font-size: 20px; }
+    .total-item.nominal .value { font-size: 22px; }
+    .modal-form { padding: 20px 16px; }
+    .modal-form h3 { font-size: 18px; }
+    
+    /* Stack nav arrows vertically */
+    .detail-nav-bar {
+        flex-direction: row;
+        flex-wrap: wrap;
     }
     
-    .summary-total {
-        padding: 20px 16px;
+    .nav-arrow {
+        flex: 1;
+        min-width: 100px;
     }
     
-    .total-item .label {
-        font-size: 10px;
-        letter-spacing: 1px;
-    }
-    
-    .total-item .value {
-        font-size: 20px;
-    }
-    
-    .total-item.nominal .value {
-        font-size: 22px;
-    }
-    
-    .modal-form {
-        padding: 20px 16px;
-    }
-    
-    .modal-form h3 {
-        font-size: 18px;
+    .nav-counter {
+        order: -1;
+        width: 100%;
+        margin-bottom: 6px;
     }
 }
 
-/* Landscape phones */
 @media (max-height: 600px) and (orientation: landscape) {
-    .pin-overlay {
-        align-items: flex-start;
-        padding: 20px;
-    }
-    
-    .pin-card {
-        padding: 24px;
-    }
-    
-    .pin-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 28px;
-        margin-bottom: 16px;
-    }
-    
-    .pin-title {
-        font-size: 20px;
-    }
+    .pin-overlay { align-items: flex-start; padding: 20px; }
+    .pin-card { padding: 24px; }
+    .pin-icon { width: 60px; height: 60px; font-size: 28px; margin-bottom: 16px; }
+    .pin-title { font-size: 20px; }
 }
 
-/* Desktop wide screens */
 @media (min-width: 1400px) {
-    .app-container {
-        max-width: 1400px;
-    }
-    
-    .card-grid {
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    }
+    .app-container { max-width: 1400px; }
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
 }
 
-/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-}
-
-/* Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
-    /* Keep light theme - pink design is light-only for brand consistency */
 }
