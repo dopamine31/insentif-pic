@@ -3,68 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Summary Insentif PIC</title>
+  <meta name="description" content="Summary Insentif PIC - Rekapitulasi Bukti Transfer">
+  <title>💰 Summary Insentif PIC</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
   
   <!-- CSS -->
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/components.css">
   <link rel="stylesheet" href="assets/css/views.css">
   <link rel="stylesheet" href="assets/css/responsive.css">
-  
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
 </head>
 <body>
 
-  <!-- PIN LOGIN OVERLAY -->
+  <!-- ============================================
+       PIN LOGIN OVERLAY
+       ============================================ -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-card">
       <div class="pin-icon">🔒</div>
       <h2 class="pin-title">Akses Terbatas</h2>
-      <p class="pin-subtitle">Masukkan PIN untuk melanjutkan</p>
-      <form onsubmit="handleLogin(event)">
-        <input 
-          type="text" 
-          id="username" 
-          class="pin-input" 
-          placeholder="Username" 
-          value="admin"
-          style="letter-spacing: normal; font-size: 16px; margin-bottom: 10px;"
-        >
+      <p class="pin-subtitle">Masukkan 4 digit PIN untuk melanjutkan</p>
+      
+      <form onsubmit="handleLogin(event)" id="loginForm">
+        <div class="pin-info-box">
+          <div class="pin-info-title">💡 Informasi Akses</div>
+          <div class="pin-info-row">
+            <span class="pin-badge pin-badge-sa">👑 Superadmin</span>
+            <span>PIN <b>2000</b></span>
+          </div>
+          <div class="pin-info-row">
+            <span class="pin-badge pin-badge-viewer">👁️ Viewer</span>
+            <span>PIN dari Superadmin</span>
+          </div>
+        </div>
+        
         <input 
           type="password" 
           id="pinInput" 
           class="pin-input" 
           placeholder="••••" 
           maxlength="4" 
+          inputmode="numeric"
           autocomplete="off"
           autofocus
+          required
         >
         <div class="pin-message" id="pinMessage"></div>
-        <button type="submit" class="pin-submit">🔓 Buka Akses</button>
+        <button type="submit" class="pin-submit" id="pinSubmit">🔓 Masuk</button>
       </form>
-      <p style="font-size: 11px; color: #95a5a6; margin-top: 15px;">
-        💡 Hubungi admin jika lupa PIN
-      </p>
+      
+      <p class="pin-hint">💡 Hubungi Superadmin jika lupa PIN</p>
     </div>
   </div>
 
-  <!-- MAIN CONTAINER -->
+  <!-- ============================================
+       MAIN APPLICATION CONTAINER
+       ============================================ -->
   <div class="app-container" id="mainContainer" style="display:none;">
     
+    <!-- APP HEADER -->
     <div class="app-header">
-      <div>
+      <div class="header-brand">
         <h1>💰 SUMMARY INSENTIF PIC</h1>
-        <p style="font-size:13px; opacity:0.9; margin-top:4px;">Rekapitulasi Bukti Transfer PIC</p>
+        <p class="header-subtitle">Rekapitulasi Bukti Transfer PIC</p>
       </div>
-      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-        <div id="userInfo" style="font-size:13px; color:white;"></div>
-        <div class="header-actions">
-          <button class="btn btn-primary" onclick="window.openPeriodModal()">➕ Periode Baru</button>
-        </div>
+      <div class="header-right">
+        <div id="userInfo" class="user-info"></div>
+        <div class="header-actions" id="headerActions"></div>
       </div>
     </div>
 
-    <!-- VIEW: SUMMARY -->
+    <!-- ============================================
+         VIEW: SUMMARY (Daftar Periode)
+         ============================================ -->
     <div id="viewSummary">
       <div id="summaryTotal" class="summary-total"></div>
       <h2 class="section-title">📅 Pilih Periode</h2>
@@ -73,32 +86,37 @@
       </div>
     </div>
 
-    <!-- VIEW: PERIOD -->
+    <!-- ============================================
+         VIEW: PERIOD (Daftar Sekolah)
+         ============================================ -->
     <div id="viewPeriod" class="hidden">
       <div id="breadcrumbPeriod" class="breadcrumb"></div>
-      <button class="btn btn-secondary" onclick="window.showSummary()" style="margin-bottom:15px;">
-        ← Kembali
-      </button>
-      <div id="periodHeader" class="detail-header" style="margin-bottom:15px;"></div>
-      <div style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="window.openSchoolModal()">
-          ➕ Tambah Sekolah
+      <div class="view-toolbar">
+        <button class="btn btn-secondary" onclick="window.showSummary()">
+          ← Kembali
         </button>
       </div>
+      <div id="periodHeader" class="detail-header"></div>
+      <div id="periodActions" class="action-bar"></div>
       <div id="schoolList" class="card-grid"></div>
     </div>
 
-    <!-- VIEW: DETAIL -->
+    <!-- ============================================
+         VIEW: DETAIL (Detail Sekolah)
+         ============================================ -->
     <div id="viewDetail" class="hidden">
       <div id="breadcrumbDetail" class="breadcrumb"></div>
-      <button class="btn btn-secondary" onclick="window.showPeriod(${state?.currentPeriodIdx || 0})" style="margin-bottom:15px;">
-        ← Kembali
-      </button>
+      <div class="view-toolbar">
+        <button class="btn btn-secondary" onclick="window.backToPeriod()">
+          ← Kembali
+        </button>
+      </div>
       <div class="detail-header">
         <div>
           <h2 id="detailSekolah"></h2>
           <p class="meta" id="detailNo"></p>
         </div>
+        <div id="detailActions"></div>
       </div>
       <div class="detail-wrapper">
         <div class="detail-left">
@@ -129,24 +147,28 @@
         </div>
         <div class="detail-right">
           <h4>📷 Bukti Transfer</h4>
-          <div id="imgContainer"></div>
+          <div id="imgContainer">
+            <div class="no-image">📭 Tidak ada bukti transfer</div>
+          </div>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- PERIOD MODAL -->
+  <!-- ============================================
+       MODAL: PERIOD (Create/Edit)
+       ============================================ -->
   <div id="periodModal" class="modal-overlay">
     <div class="modal-form">
       <h3>
         <span id="periodModalTitle">➕ Periode Baru</span>
-        <button class="btn btn-icon delete" onclick="window.closeModal('periodModal')" style="position:static;">✕</button>
+        <button class="btn btn-icon delete" onclick="window.closeModal('periodModal')">✕</button>
       </h3>
       <form onsubmit="savePeriod(event)">
         <input type="hidden" id="periodId">
         <div class="form-group">
-          <label>Nama Periode *</label>
+          <label>Nama Periode <span class="required">*</span></label>
           <input type="text" id="periodName" required placeholder="Contoh: Periode Januari 2026">
         </div>
         <div class="form-row">
@@ -161,10 +183,13 @@
         </div>
         <div class="form-group">
           <label>Deskripsi</label>
-          <textarea id="periodDesc" placeholder="Deskripsi (opsional)"></textarea>
+          <textarea id="periodDesc" placeholder="Deskripsi periode (opsional)"></textarea>
         </div>
-        <div class="form-group">
-          <label><input type="checkbox" id="periodActive" checked> Aktif</label>
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" id="periodActive" checked>
+            <span>Aktif</span>
+          </label>
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="window.closeModal('periodModal')">Batal</button>
@@ -174,63 +199,75 @@
     </div>
   </div>
 
-  <!-- SCHOOL MODAL -->
+  <!-- ============================================
+       MODAL: SCHOOL (Create/Edit + Upload)
+       ============================================ -->
   <div id="schoolModal" class="modal-overlay">
     <div class="modal-form">
       <h3>
         <span id="schoolModalTitle">➕ Tambah Sekolah</span>
-        <button class="btn btn-icon delete" onclick="window.closeModal('schoolModal')" style="position:static;">✕</button>
+        <button class="btn btn-icon delete" onclick="window.closeModal('schoolModal')">✕</button>
       </h3>
       <form onsubmit="saveSchool(event)">
         <input type="hidden" id="schoolId">
         <input type="hidden" id="schoolPeriodId">
+        
         <div class="form-row">
           <div class="form-group">
             <label>No. Urut</label>
             <input type="number" id="schoolNo" value="1" min="1">
           </div>
           <div class="form-group">
-            <label>Nama Sekolah *</label>
+            <label>Nama Sekolah <span class="required">*</span></label>
             <input type="text" id="schoolName" required placeholder="SDN 01 Jakarta">
           </div>
         </div>
+        
         <div class="form-row">
           <div class="form-group">
-            <label>Nama PIC *</label>
+            <label>Nama PIC <span class="required">*</span></label>
             <input type="text" id="schoolPIC" required placeholder="Budi Santoso">
           </div>
           <div class="form-group">
-            <label>Bank / E-Wallet *</label>
+            <label>Bank / E-Wallet <span class="required">*</span></label>
             <input type="text" id="schoolBank" required placeholder="BCA / DANA / OVO">
           </div>
         </div>
+        
         <div class="form-row">
           <div class="form-group">
-            <label>No. Rekening / HP *</label>
+            <label>No. Rekening / HP <span class="required">*</span></label>
             <input type="text" id="schoolRek" required placeholder="1234567890">
           </div>
           <div class="form-group">
-            <label>Nominal Transfer (Rp) *</label>
+            <label>Nominal Transfer (Rp) <span class="required">*</span></label>
             <input type="number" id="schoolNom" required min="0" placeholder="500000">
           </div>
         </div>
+        
         <div class="form-group">
           <label>Tanggal Transfer</label>
           <input type="date" id="schoolDate">
         </div>
+        
         <div class="form-group">
           <label>Bukti Transfer (Maks 5MB)</label>
           <label class="file-upload" id="fileUploadLabel" for="schoolFile">
-            <div>📁 Klik untuk pilih gambar</div>
+            <div class="file-upload-text">
+              <span class="file-upload-icon">📁</span>
+              <span>Klik untuk pilih gambar atau drag di sini</span>
+            </div>
             <input type="file" id="schoolFile" accept="image/*" onchange="previewFile(event)">
-            <img id="filePreview" class="upload-preview hidden">
+            <img id="filePreview" class="upload-preview hidden" alt="Preview">
           </label>
-          <small id="fileInfo" style="color:var(--gray); display:block; margin-top:5px;"></small>
+          <small id="fileInfo" class="file-info"></small>
         </div>
+        
         <div class="form-group">
           <label>Catatan</label>
-          <textarea id="schoolNotes" placeholder="Catatan tambahan"></textarea>
+          <textarea id="schoolNotes" placeholder="Catatan tambahan (opsional)"></textarea>
         </div>
+        
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="window.closeModal('schoolModal')">Batal</button>
           <button type="submit" class="btn btn-primary">💾 Simpan</button>
@@ -239,12 +276,279 @@
     </div>
   </div>
 
-  <!-- ZOOM MODAL -->
-  <div id="zoomModal" class="zoom-modal" onclick="window.closeZoom()">
-    <img id="zoomImg">
+  <!-- ============================================
+       MODAL: VIEWERS MANAGEMENT (Superadmin Only)
+       ============================================ -->
+  <div id="viewersModal" class="modal-overlay">
+    <div class="modal-form modal-large">
+      <h3>
+        <span>👥 Kelola Viewer</span>
+        <button class="btn btn-icon delete" onclick="closeViewersModal()">✕</button>
+      </h3>
+      
+      <div class="modal-toolbar">
+        <button class="btn btn-primary" onclick="createViewer()">
+          ➕ Buat Viewer Baru
+        </button>
+        <button class="btn btn-secondary" onclick="window.ViewersModal.load()">
+          🔄 Refresh
+        </button>
+      </div>
+      
+      <div class="alert alert-info">
+        <b>ℹ️ Info:</b> PIN hanya ditampilkan <b>sekali</b> saat dibuat/reset. Simpan dengan aman!
+      </div>
+      
+      <div id="viewersList" class="viewers-container">
+        <div class="loading">Memuat daftar viewer...</div>
+      </div>
+    </div>
   </div>
 
-  <!-- JS MODULES -->
+  <!-- ============================================
+       MODAL: ZOOM IMAGE
+       ============================================ -->
+  <div id="zoomModal" class="zoom-modal" onclick="window.closeZoom()">
+    <img id="zoomImg" alt="Bukti Transfer">
+    <button class="zoom-close" onclick="window.closeZoom(); event.stopPropagation();">✕</button>
+  </div>
+
+  <!-- ============================================
+       MODAL: PIN DISPLAY (untuk new viewer)
+       ============================================ -->
+  <div id="pinDisplayModal" class="modal-overlay">
+    <div class="modal-form pin-display-card">
+      <div class="pin-display-icon" id="pinDisplayIcon">✅</div>
+      <h3 id="pinDisplayTitle">PIN Berhasil Dibuat!</h3>
+      <p id="pinDisplaySubtitle" class="pin-display-subtitle">Berikan PIN ini kepada viewer:</p>
+      <div class="pin-display-value" id="pinDisplayValue">0000</div>
+      <p class="pin-display-warning">
+        ⚠️ Simpan PIN ini! PIN tidak akan ditampilkan lagi.
+      </p>
+      <button class="btn btn-primary btn-full" onclick="window.closePinDisplay()">
+        OK, Saya Sudah Catat
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================
+       JAVASCRIPT MODULES
+       ============================================ -->
   <script type="module" src="assets/js/app.js"></script>
+  <script type="module" src="assets/js/modals/viewers-modal.js"></script>
+
+  <!-- ============================================
+       INLINE STYLES (tambahan untuk HTML elements)
+       ============================================ -->
+  <style>
+    /* PIN Info Box */
+    .pin-info-box {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      color: #555;
+      text-align: left;
+    }
+    .pin-info-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .pin-info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0;
+    }
+    .pin-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+    }
+    .pin-badge-sa {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+    .pin-badge-viewer {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+    }
+    
+    /* Header */
+    .header-brand h1 {
+      font-size: 22px;
+      color: white;
+      margin-bottom: 4px;
+    }
+    .header-subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+      color: white;
+    }
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .user-info {
+      font-size: 13px;
+      color: white;
+    }
+    
+    /* Toolbar */
+    .view-toolbar {
+      margin-bottom: 15px;
+    }
+    .action-bar {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    /* Section title */
+    .section-title {
+      color: white;
+      font-size: 18px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    /* Required field indicator */
+    .required {
+      color: var(--danger);
+    }
+    
+    /* Checkbox group */
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    
+    /* File upload */
+    .file-upload-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--gray);
+    }
+    .file-upload-icon {
+      font-size: 28px;
+    }
+    .file-info {
+      display: block;
+      margin-top: 6px;
+      color: var(--gray);
+      font-size: 12px;
+    }
+    
+    /* Modal large */
+    .modal-large {
+      max-width: 950px;
+    }
+    .modal-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .alert-info {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+    }
+    
+    /* Viewers container */
+    .viewers-container {
+      overflow-x: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+    }
+    
+    /* PIN Display Modal */
+    .pin-display-card {
+      text-align: center;
+      max-width: 450px;
+    }
+    .pin-display-icon {
+      font-size: 64px;
+      margin-bottom: 15px;
+    }
+    .pin-display-subtitle {
+      color: var(--gray);
+      margin-bottom: 20px;
+    }
+    .pin-display-value {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      font-family: 'Courier New', monospace;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    .pin-display-warning {
+      font-size: 12px;
+      color: var(--danger);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    /* Zoom close button */
+    .zoom-close {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+    .zoom-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-brand h1 { font-size: 18px; }
+      .header-right { align-items: flex-start; width: 100%; }
+      .pin-display-value { font-size: 40px; letter-spacing: 8px; padding: 18px; }
+      .modal-large { max-width: 95%; }
+    }
+  </style>
+
 </body>
 </html>

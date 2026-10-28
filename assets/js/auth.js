@@ -1,6 +1,5 @@
 // ============================================
-// AUTHENTICATION MODULE
-// PIN diverifikasi dari Supabase (hashed SHA-256)
+// AUTHENTICATION MODULE - PIN ONLY
 // ============================================
 import { getSupabase } from './supabase-client.js';
 import { hashPin } from './utils/crypto.js';
@@ -12,50 +11,37 @@ export class AuthManager {
         this.lockUntilKey = 'pic_pin_lock_until';
     }
 
-    /**
-     * Login dengan PIN
-     * @param {string} username 
-     * @param {string} pin 
-     * @returns {Promise<{success: boolean, user?: object, message: string}>}
-     */
-    async login(username, pin) {
+    async login(pin) {
         if (this.isLocked()) {
             const remaining = this.getLockRemaining();
-            return {
-                success: false,
-                message: `🔒 Akun terkunci. Coba lagi dalam ${remaining} detik`
-            };
+            return { success: false, message: `🔒 Terkunci. Coba dalam ${remaining} detik` };
         }
 
         try {
-            // Hash PIN yang diinput
-            const inputHash = await hashPin(pin, username);
-
-            // Query ke Supabase
+            const inputHash = await hashPin(pin);
             const supabase = getSupabase();
+            
+            // Query by pin_hash only
             const { data, error } = await supabase
                 .from('admins')
-                .select('id, username, role')
-                .eq('username', username)
+                .select('id, username, role, notes')
                 .eq('pin_hash', inputHash)
                 .eq('is_active', true)
                 .single();
 
             if (error || !data) {
                 this.recordFailedAttempt();
-                const attempts = this.getAttempts();
-                const remaining = APP_CONFIG.maxPinAttempts - attempts;
+                const remaining = APP_CONFIG.maxPinAttempts - this.getAttempts();
                 return {
                     success: false,
                     message: remaining > 0 
                         ? `❌ PIN salah! Sisa ${remaining} percobaan`
-                        : '🚫 Terlalu banyak percobaan. Akun dikunci.'
+                        : '🚫 Akun terkunci sementara.'
                 };
             }
 
-            // Sukses - update last_login
-            await supabase
-                .from('admins')
+            // Update last login
+            await supabase.from('admins')
                 .update({ last_login: new Date().toISOString() })
                 .eq('id', data.id);
 
@@ -64,24 +50,21 @@ export class AuthManager {
                 userId: data.id,
                 username: data.username,
                 role: data.role,
+                notes: data.notes,
                 loginAt: Date.now()
             }));
 
-            // Reset attempts
             sessionStorage.removeItem(this.attemptsKey);
             sessionStorage.removeItem(this.lockUntilKey);
 
+            const roleLabel = data.role === 'superadmin' ? '👑 Superadmin' : '👁️ Viewer';
             return {
                 success: true,
                 user: data,
-                message: `✅ Selamat datang, ${data.username}!`
+                message: `✅ ${roleLabel} berhasil masuk!`
             };
         } catch (err) {
-            console.error('Login error:', err);
-            return {
-                success: false,
-                message: `❌ Error: ${err.message}`
-            };
+            return { success: false, message: `❌ Error: ${err.message}` };
         }
     }
 
@@ -94,34 +77,38 @@ export class AuthManager {
         if (!session) return false;
         try {
             const data = JSON.parse(session);
-            // Session valid 24 jam
             return Date.now() - data.loginAt < 24 * 60 * 60 * 1000;
-        } catch {
-            return false;
-        }
+        } catch { return false; }
     }
 
     getCurrentUser() {
         if (!this.isAuthenticated()) return null;
-        try {
-            return JSON.parse(sessionStorage.getItem(APP_CONFIG.sessionKey));
-        } catch {
-            return null;
-        }
+        try { return JSON.parse(sessionStorage.getItem(APP_CONFIG.sessionKey)); }
+        catch { return null; }
+    }
+
+    isSuperadmin() {
+        const user = this.getCurrentUser();
+        return user && user.role === 'superadmin';
+    }
+
+    isViewer() {
+        const user = this.getCurrentUser();
+        return user && user.role === 'viewer';
+    }
+
+    canEdit() {
+        return this.isSuperadmin();
     }
 
     recordFailedAttempt() {
         const attempts = this.getAttempts() + 1;
         sessionStorage.setItem(this.attemptsKey, attempts.toString());
-        
-        if (attempts >= APP_CONFIG.maxPinAttempts) {
-            this.lockAccount();
-        }
+        if (attempts >= APP_CONFIG.maxPinAttempts) this.lockAccount();
     }
 
     lockAccount() {
-        const lockUntil = Date.now() + APP_CONFIG.lockDuration;
-        sessionStorage.setItem(this.lockUntilKey, lockUntil.toString());
+        sessionStorage.setItem(this.lockUntilKey, (Date.now() + APP_CONFIG.lockDuration).toString());
         sessionStorage.setItem(this.attemptsKey, '0');
     }
 
