@@ -1,5 +1,6 @@
 // ============================================
 // PERIOD VIEW
+// FIX: Edit button sekarang berfungsi normal
 // ============================================
 import { state } from '../state.js';
 import { auth } from '../auth.js';
@@ -18,10 +19,11 @@ export const PeriodView = {
             <span class="current">📅 ${escapeHtml(p.name)}</span>
         `;
 
+        // FIX: Tidak ada stopPropagation di card-actions
         const editorActions = auth.isSuperadmin() ? `
             <div class="card-actions">
-                <button class="btn btn-icon edit" data-action="edit-period" data-id="${p.id}" title="Edit">✏️</button>
-                <button class="btn btn-icon delete" data-action="delete-period" data-id="${p.id}" title="Hapus">🗑️</button>
+                <button class="btn btn-icon edit" data-action="edit-period" data-id="${p.id}" title="Edit Periode">✏️</button>
+                <button class="btn btn-icon delete" data-action="delete-period" data-id="${p.id}" title="Hapus Periode">🗑️</button>
             </div>
         ` : '';
 
@@ -73,7 +75,7 @@ export const PeriodView = {
 
         list.innerHTML = p.schools.map((s) => {
             const actionButtons = auth.isSuperadmin() ? `
-                <div class="card-actions" onclick="event.stopPropagation()">
+                <div class="card-actions">
                     <button class="btn btn-icon edit" data-action="edit-school" data-id="${s.id}" title="Edit">✏️</button>
                     <button class="btn btn-icon delete" data-action="delete-school" data-id="${s.id}" title="Hapus">🗑️</button>
                 </div>
