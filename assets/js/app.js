@@ -1,19 +1,15 @@
 // ============================================
 // MAIN APPLICATION
-// FEATURE: Swipe navigation handlers + Keyboard shortcuts
 // ============================================
-
 import { auth } from './auth.js';
 import { state } from './state.js';
 import { SummaryView } from './views/summary-view.js';
 import { PeriodView } from './views/period-view.js';
 import { DetailView } from './views/detail-view.js';
+import { BankAccountsView } from './views/bank-accounts-view.js';
 import { toast } from './utils/toast.js';
 import { escapeHtml } from './utils/format.js';
 
-// ============================================
-// GLOBAL LOADER
-// ============================================
 export const Loader = {
     show(text = 'Memproses...') {
         const loader = document.getElementById('globalLoader');
@@ -27,9 +23,6 @@ export const Loader = {
     }
 };
 
-// ============================================
-// MAIN APP CLASS
-// ============================================
 class App {
     constructor() {
         this.initAuth();
@@ -48,10 +41,7 @@ class App {
     showPinScreen() {
         document.getElementById('pinOverlay').classList.remove('unlocked');
         document.getElementById('mainContainer').style.display = 'none';
-        
-        if (auth.isLocked()) {
-            this.startLockTimer();
-        }
+        if (auth.isLocked()) this.startLockTimer();
     }
 
     startLockTimer() {
@@ -61,7 +51,6 @@ class App {
                 const input = document.getElementById('pinInput');
                 const msg = document.getElementById('pinMessage');
                 const btn = document.getElementById('pinSubmit');
-                
                 if (input) { input.disabled = false; input.focus(); }
                 if (msg) { msg.innerText = ''; msg.className = 'pin-message'; }
                 if (btn) btn.disabled = false;
@@ -97,7 +86,6 @@ class App {
 
         try {
             const result = await auth.login(pin);
-            
             if (result.success) {
                 msgEl.innerText = result.message;
                 msgEl.className = 'pin-message success';
@@ -107,10 +95,7 @@ class App {
                 msgEl.className = 'pin-message error';
                 document.getElementById('pinInput').value = '';
                 document.getElementById('pinInput').focus();
-                
-                if (auth.isLocked()) {
-                    this.startLockTimer();
-                }
+                if (auth.isLocked()) this.startLockTimer();
             }
         } catch (err) {
             msgEl.innerText = `❌ Error: ${err.message}`;
@@ -153,15 +138,13 @@ class App {
         const actions = document.getElementById('headerActions');
         if (auth.isSuperadmin()) {
             actions.innerHTML = `
-                <button class="btn btn-primary" data-action="open-period-modal">
-                    ➕ Periode Baru
-                </button>
-                <button class="btn btn-gold" data-action="open-viewers-modal">
-                    👥 Kelola Viewer
-                </button>
+                <button class="btn btn-primary" data-action="open-period-modal">➕ Periode</button>
+                <button class="btn btn-rose" data-action="show-bank-accounts">💳 Rekening</button>
+                <button class="btn btn-gold" data-action="open-viewers-modal">👥 Viewer</button>
             `;
         } else {
             actions.innerHTML = `
+                <button class="btn btn-secondary" data-action="show-bank-accounts">💳 Rekening</button>
                 <div style="background:rgba(100,116,139,0.1); padding:10px 16px; border-radius:10px; font-size:12px; color:#475569; font-weight:600; border:1px solid rgba(100,116,139,0.2);">
                     🔒 Mode Viewer
                 </div>
@@ -187,28 +170,39 @@ class App {
         }
     }
 
+    hideAllViews() {
+        ['viewSummary', 'viewPeriod', 'viewDetail', 'viewBankAccounts'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+    }
+
     showSummary() {
+        this.hideAllViews();
         document.getElementById('viewSummary').classList.remove('hidden');
-        document.getElementById('viewPeriod').classList.add('hidden');
-        document.getElementById('viewDetail').classList.add('hidden');
         SummaryView.render();
         this.scrollToTop();
     }
 
     showPeriod(idx) {
         state.setCurrentPeriod(idx);
-        document.getElementById('viewSummary').classList.add('hidden');
+        this.hideAllViews();
         document.getElementById('viewPeriod').classList.remove('hidden');
-        document.getElementById('viewDetail').classList.add('hidden');
         PeriodView.render(idx);
         this.scrollToTop();
     }
 
     showDetail(school) {
-        document.getElementById('viewSummary').classList.add('hidden');
-        document.getElementById('viewPeriod').classList.add('hidden');
+        this.hideAllViews();
         document.getElementById('viewDetail').classList.remove('hidden');
         DetailView.render(school);
+        this.scrollToTop();
+    }
+
+    async showBankAccounts() {
+        this.hideAllViews();
+        document.getElementById('viewBankAccounts').classList.remove('hidden');
+        await BankAccountsView.init();
         this.scrollToTop();
     }
 
@@ -224,22 +218,17 @@ class App {
         Loader.show('Memperbarui data...');
         try {
             await state.loadPeriods();
-            if (viewName === 'summary') {
-                this.showSummary();
-            } else if (viewName === 'period') {
-                this.showPeriod(state.currentPeriodIdx);
-            } else if (viewName === 'detail') {
+            if (viewName === 'summary') this.showSummary();
+            else if (viewName === 'period') this.showPeriod(state.currentPeriodIdx);
+            else if (viewName === 'detail') {
                 const school = state.currentSchool;
                 if (school) {
-                    const updatedSchool = this.findSchoolById(school.id);
-                    if (updatedSchool) {
-                        this.showDetail(updatedSchool);
-                    } else {
-                        this.showPeriod(state.currentPeriodIdx);
-                    }
-                } else {
-                    this.showPeriod(state.currentPeriodIdx);
-                }
+                    const updated = this.findSchoolById(school.id);
+                    if (updated) this.showDetail(updated);
+                    else this.showPeriod(state.currentPeriodIdx);
+                } else this.showPeriod(state.currentPeriodIdx);
+            } else if (viewName === 'bank') {
+                await BankAccountsView.load();
             }
         } catch (err) {
             toast('Gagal memperbarui: ' + err.message, 'error');
@@ -251,13 +240,9 @@ class App {
     getCurrentView() {
         if (!document.getElementById('viewDetail').classList.contains('hidden')) return 'detail';
         if (!document.getElementById('viewPeriod').classList.contains('hidden')) return 'period';
+        if (!document.getElementById('viewBankAccounts').classList.contains('hidden')) return 'bank';
         return 'summary';
     }
-
-    // ============================================
-    // EVENT DELEGATION
-    // FIX: Cek apakah target adalah tombol di dalam card sebelum trigger show-period
-    // ============================================
 
     initEventDelegation() {
         document.addEventListener('click', async (e) => {
@@ -265,112 +250,83 @@ class App {
             if (!target) return;
             
             const action = target.dataset.action;
-            
-            // PENTING: Jika action adalah edit/delete/jenis action spesifik, 
-            // jangan propagate ke parent card
             const specificActions = [
-                'edit-period', 'delete-period',
-                'edit-school', 'delete-school',
+                'edit-period', 'delete-period', 'edit-school', 'delete-school',
                 'nav-prev', 'nav-next', 'nav-goto',
                 'close-modal', 'close-zoom', 'close-pin-display',
                 'logout', 'retry-load',
                 'open-period-modal', 'open-school-modal', 'open-viewers-modal',
+                'open-bank-account-modal', 'edit-bank-account', 'delete-bank-account',
                 'create-viewer', 'reset-viewer-pin', 'toggle-viewer',
-                'edit-viewer-notes', 'delete-viewer', 'refresh-viewers'
+                'edit-viewer-notes', 'delete-viewer', 'refresh-viewers',
+                'set-bank-view', 'sort-bank', 'copy-account-number', 'clear-bank-search',
+                'show-bank-accounts'
             ];
             
-            if (specificActions.includes(action)) {
-                e.stopPropagation();
-            }
+            if (specificActions.includes(action)) e.stopPropagation();
             
             const id = target.dataset.id;
             const idx = target.dataset.idx;
-            
             await this.handleAction(action, id, idx, target);
         });
 
         document.addEventListener('submit', async (e) => {
             const form = e.target.closest('form[data-form]');
             if (!form) return;
-            
             e.preventDefault();
             await this.handleFormSubmit(form.dataset.form, e);
         });
 
-        // PIN display copy to clipboard
         document.getElementById('pinDisplayValue')?.addEventListener('click', () => {
             const pin = document.getElementById('pinDisplayValue').innerText;
-            navigator.clipboard.writeText(pin).then(() => {
-                toast('PIN berhasil di-copy! 📋', 'success');
-            });
+            navigator.clipboard.writeText(pin).then(() => toast('PIN berhasil di-copy! 📋', 'success'));
         });
     }
 
-    // ============================================
-    // KEYBOARD SHORTCUTS
-    // ============================================
     initKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // ESC to close modals
-            if (e.key === 'Escape') {
-                this.closeAllModals();
-                return;
-            }
+            if (e.key === 'Escape') { this.closeAllModals(); return; }
             
-            // Arrow navigation di detail view
             const isDetailView = !document.getElementById('viewDetail').classList.contains('hidden');
             if (!isDetailView) return;
-            
-            // Ignore jika user sedang mengetik di input
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (document.querySelector('.modal-overlay.active')) return;
             
-            // Ignore jika modal terbuka
-            const hasOpenModal = document.querySelector('.modal-overlay.active');
-            if (hasOpenModal) return;
-            
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                DetailView.navigate('prev');
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                DetailView.navigate('next');
-            }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); DetailView.navigate('prev'); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); DetailView.navigate('next'); }
         });
     }
 
     async handleAction(action, id, idx, target) {
         try {
             switch (action) {
-                // Period actions
+                // PERIOD
                 case 'open-period-modal':
                     if (!this.requireSuperadmin()) return;
                     const { PeriodModal } = await import('./modals/period-modal.js');
                     PeriodModal.open();
                     break;
-                    
                 case 'edit-period':
                     if (!this.requireSuperadmin()) return;
                     const { PeriodModal: PM } = await import('./modals/period-modal.js');
                     PM.open(id);
                     break;
-                    
                 case 'delete-period':
                     if (!this.requireSuperadmin()) return;
-                    if (!confirm('Hapus periode ini? Semua data sekolah di dalamnya ikut terhapus.')) return;
-                    Loader.show('Menghapus periode...');
+                    if (!confirm('Hapus periode ini?')) return;
+                    Loader.show('Menghapus...');
                     const { PeriodService } = await import('./services/period-service.js');
                     await PeriodService.delete(id);
                     toast('Periode dihapus 💕', 'success');
                     await this.refreshAndShow('summary');
                     break;
 
-                // School actions
+                // SCHOOL
                 case 'open-school-modal':
                     if (!this.requireSuperadmin()) return;
                     const { SchoolModal } = await import('./modals/school-modal.js');
                     SchoolModal.open();
                     break;
-                    
                 case 'edit-school':
                     if (!this.requireSuperadmin()) return;
                     const school = this.findSchoolById(id);
@@ -379,12 +335,11 @@ class App {
                         SM.open(school);
                     }
                     break;
-                    
                 case 'delete-school':
                     if (!this.requireSuperadmin()) return;
                     const schoolDel = this.findSchoolById(id);
                     if (schoolDel && confirm(`Hapus ${schoolDel.sekolah_name}?`)) {
-                        Loader.show('Menghapus data...');
+                        Loader.show('Menghapus...');
                         const { SchoolService } = await import('./services/school-service.js');
                         await SchoolService.delete(schoolDel.id, schoolDel.transfer_proof_path);
                         toast('Data dihapus 💕', 'success');
@@ -392,114 +347,116 @@ class App {
                     }
                     break;
 
-                // SWIPE NAVIGATION ACTIONS
-                case 'nav-prev':
-                    DetailView.navigate('prev');
+                // BANK ACCOUNTS
+                case 'show-bank-accounts':
+                    await this.showBankAccounts();
                     break;
-                    
-                case 'nav-next':
-                    DetailView.navigate('next');
+                case 'open-bank-account-modal':
+                    if (!this.requireSuperadmin()) return;
+                    const { BankAccountModal } = await import('./modals/bank-account-modal.js');
+                    await BankAccountModal.open();
                     break;
-                    
-                case 'nav-goto':
-                    const gotoIdx = parseInt(idx);
-                    if (!isNaN(gotoIdx)) {
-                        DetailView.navigate(gotoIdx);
-                    }
+                case 'edit-bank-account':
+                    if (!this.requireSuperadmin()) return;
+                    const { BankAccountModal: BAM } = await import('./modals/bank-account-modal.js');
+                    await BAM.open(id);
+                    break;
+                case 'delete-bank-account':
+                    if (!this.requireSuperadmin()) return;
+                    const account = BankAccountsView.accounts.find(a => a.id === id);
+                    if (!account) return;
+                    if (!confirm(`Hapus rekening ${account.account_name} (${account.bank_name})?`)) return;
+                    Loader.show('Menghapus...');
+                    const { BankAccountService } = await import('./services/bank-account-service.js');
+                    await BankAccountService.delete(id);
+                    toast('Rekening dihapus 💕', 'success');
+                    await BankAccountsView.load();
+                    Loader.hide();
+                    break;
+                case 'set-bank-view':
+                    BankAccountsView.setView(target.dataset.view);
+                    break;
+                case 'sort-bank':
+                    BankAccountsView.setSort(target.dataset.field);
+                    break;
+                case 'copy-account-number':
+                    const number = target.dataset.number;
+                    if (number) BankAccountsView.copyToClipboard(number);
+                    break;
+                case 'clear-bank-search':
+                    BankAccountsView.clearSearch();
                     break;
 
-                // Viewers
+                // DETAIL NAV
+                case 'nav-prev': DetailView.navigate('prev'); break;
+                case 'nav-next': DetailView.navigate('next'); break;
+                case 'nav-goto':
+                    const gotoIdx = parseInt(idx);
+                    if (!isNaN(gotoIdx)) DetailView.navigate(gotoIdx);
+                    break;
+
+                // VIEWERS
                 case 'open-viewers-modal':
                     if (!this.requireSuperadmin()) return;
                     const { ViewersModal } = await import('./modals/viewers-modal.js');
                     await ViewersModal.open();
                     break;
-                    
                 case 'reset-viewer-pin':
                     if (!this.requireSuperadmin()) return;
                     if (!confirm('Reset PIN viewer ini?')) return;
                     const { ViewersModal: VM } = await import('./modals/viewers-modal.js');
                     await VM.resetPin(id);
                     break;
-                    
                 case 'toggle-viewer':
                     if (!this.requireSuperadmin()) return;
                     const isActive = target.dataset.active === 'true';
                     const { ViewersModal: VM2 } = await import('./modals/viewers-modal.js');
                     await VM2.toggleActive(id, !isActive);
                     break;
-                    
                 case 'edit-viewer-notes':
                     if (!this.requireSuperadmin()) return;
                     const { ViewersModal: VM3 } = await import('./modals/viewers-modal.js');
                     await VM3.editNotes(id);
                     break;
-                    
                 case 'delete-viewer':
                     if (!this.requireSuperadmin()) return;
                     if (!confirm('Hapus viewer ini?')) return;
                     const { ViewersModal: VM4 } = await import('./modals/viewers-modal.js');
                     await VM4.delete(id);
                     break;
-                    
                 case 'create-viewer':
                     if (!this.requireSuperadmin()) return;
                     const { ViewersModal: VM5 } = await import('./modals/viewers-modal.js');
                     await VM5.createViewer();
                     break;
-                    
                 case 'refresh-viewers':
                     const { ViewersModal: VM6 } = await import('./modals/viewers-modal.js');
                     await VM6.load();
                     break;
 
-                // Modal/UI
+                // UI
                 case 'close-modal':
                     const modalId = target.dataset.modal;
                     if (modalId) this.closeModal(modalId);
                     break;
-                    
-                case 'close-zoom':
-                    this.closeZoom();
-                    break;
-                    
-                case 'close-pin-display':
-                    this.closePinDisplay();
-                    break;
-
-                // Navigation
-                case 'show-summary':
-                    this.showSummary();
-                    break;
-                    
+                case 'close-zoom': this.closeZoom(); break;
+                case 'close-pin-display': this.closePinDisplay(); break;
+                case 'show-summary': this.showSummary(); break;
                 case 'show-period':
                     const periodIdx = parseInt(idx);
                     if (!isNaN(periodIdx)) this.showPeriod(periodIdx);
                     break;
-                    
                 case 'show-detail':
-                    const schoolId = target.dataset.id;
-                    const schoolDetail = this.findSchoolById(schoolId);
+                    const schoolDetail = this.findSchoolById(target.dataset.id);
                     if (schoolDetail) this.showDetail(schoolDetail);
                     break;
-                    
-                case 'back-to-period':
-                    this.backToPeriod();
-                    break;
-                    
+                case 'back-to-period': this.backToPeriod(); break;
                 case 'open-zoom':
                     const src = target.dataset.src;
                     if (src) this.openZoom(src);
                     break;
-                    
-                case 'logout':
-                    auth.logout();
-                    location.reload();
-                    break;
-
-                case 'retry-load':
-                    await this.loadData();
-                    break;
+                case 'logout': auth.logout(); location.reload(); break;
+                case 'retry-load': await this.loadData(); break;
             }
         } catch (err) {
             console.error('Action error:', err);
@@ -511,22 +468,25 @@ class App {
     async handleFormSubmit(formType, e) {
         try {
             switch (formType) {
-                case 'login':
-                    await this.handleLogin(e);
-                    break;
-                    
+                case 'login': await this.handleLogin(e); break;
                 case 'period':
                     if (!this.requireSuperadmin()) return;
-                    Loader.show('Menyimpan periode...');
+                    Loader.show('Menyimpan...');
                     const { PeriodModal } = await import('./modals/period-modal.js');
                     await PeriodModal.save(e);
                     break;
-                    
                 case 'school':
                     if (!this.requireSuperadmin()) return;
-                    Loader.show('Menyimpan data sekolah...');
+                    Loader.show('Menyimpan...');
                     const { SchoolModal } = await import('./modals/school-modal.js');
                     await SchoolModal.save(e);
+                    break;
+                case 'bank-account':
+                    if (!this.requireSuperadmin()) return;
+                    Loader.show('Menyimpan...');
+                    const { BankAccountModal } = await import('./modals/bank-account-modal.js');
+                    await BankAccountModal.save(e);
+                    Loader.hide();
                     break;
             }
         } catch (err) {
@@ -538,7 +498,7 @@ class App {
 
     requireSuperadmin() {
         if (!auth.isSuperadmin()) {
-            toast('⛔ Hanya Superadmin yang dapat melakukan aksi ini', 'warning');
+            toast('⛔ Hanya Superadmin', 'warning');
             return false;
         }
         return true;
@@ -555,9 +515,7 @@ class App {
     closeAllModals() {
         this.closeZoom();
         this.closePinDisplay();
-        document.querySelectorAll('.modal-overlay.active').forEach(m => {
-            m.classList.remove('active');
-        });
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
     }
 
     closeModal(id) {
@@ -580,22 +538,18 @@ class App {
     }
 }
 
-// ============================================
-// INITIALIZE
-// ============================================
 const app = new App();
 
-// ============================================
-// GLOBAL EXPOSURE
-// ============================================
 window.app = app;
 window.Loader = Loader;
 window.DetailView = DetailView;
+window.BankAccountsView = BankAccountsView;
 window.handleLogin = (e) => app.handleLogin(e);
 window.logout = () => { auth.logout(); location.reload(); };
 window.showSummary = () => app.showSummary();
 window.showPeriod = (idx) => app.showPeriod(idx);
 window.showDetail = (school) => app.showDetail(school);
+window.showBankAccounts = () => app.showBankAccounts();
 window.backToPeriod = () => app.backToPeriod();
 window.closeModal = (id) => app.closeModal(id);
 window.closeZoom = () => app.closeZoom();
@@ -605,7 +559,7 @@ window.openZoom = (src) => app.openZoom(src);
 window.savePeriod = async (e) => {
     e.preventDefault();
     if (!app.requireSuperadmin()) return;
-    Loader.show('Menyimpan periode...');
+    Loader.show('Menyimpan...');
     const { PeriodModal } = await import('./modals/period-modal.js');
     await PeriodModal.save(e);
 };
@@ -613,7 +567,7 @@ window.savePeriod = async (e) => {
 window.saveSchool = async (e) => {
     e.preventDefault();
     if (!app.requireSuperadmin()) return;
-    Loader.show('Menyimpan data sekolah...');
+    Loader.show('Menyimpan...');
     const { SchoolModal } = await import('./modals/school-modal.js');
     await SchoolModal.save(e);
 };
@@ -638,10 +592,7 @@ window.deletePeriod = async (id) => {
         await PeriodService.delete(id);
         toast('Periode dihapus 💕', 'success');
         await app.refreshAndShow('summary');
-    } catch (err) {
-        toast('Gagal: ' + err.message, 'error');
-        Loader.hide();
-    }
+    } catch (err) { toast('Gagal: ' + err.message, 'error'); Loader.hide(); }
 };
 
 window.openSchoolModal = async (school = null) => {
@@ -653,32 +604,23 @@ window.openSchoolModal = async (school = null) => {
 window.editSchool = async (schoolData) => {
     if (!app.requireSuperadmin()) return;
     try {
-        const school = typeof schoolData === 'string' 
-            ? JSON.parse(schoolData.replace(/&quot;/g, '"')) 
-            : schoolData;
+        const school = typeof schoolData === 'string' ? JSON.parse(schoolData.replace(/&quot;/g, '"')) : schoolData;
         const { SchoolModal } = await import('./modals/school-modal.js');
         SchoolModal.open(school);
-    } catch (err) {
-        toast('Error: ' + err.message, 'error');
-    }
+    } catch (err) { toast('Error: ' + err.message, 'error'); }
 };
 
 window.deleteSchool = async (schoolData) => {
     if (!app.requireSuperadmin()) return;
     try {
-        const school = typeof schoolData === 'string' 
-            ? JSON.parse(schoolData.replace(/&quot;/g, '"')) 
-            : schoolData;
+        const school = typeof schoolData === 'string' ? JSON.parse(schoolData.replace(/&quot;/g, '"')) : schoolData;
         if (!confirm(`Hapus ${school.sekolah_name}?`)) return;
         Loader.show('Menghapus...');
         const { SchoolService } = await import('./services/school-service.js');
         await SchoolService.delete(school.id, school.transfer_proof_path);
         toast('Data dihapus 💕', 'success');
         await app.refreshAndShow('period');
-    } catch (err) {
-        toast('Gagal: ' + err.message, 'error');
-        Loader.hide();
-    }
+    } catch (err) { toast('Gagal: ' + err.message, 'error'); Loader.hide(); }
 };
 
 window.openViewersModal = async () => {
@@ -724,6 +666,32 @@ window.ViewersModal = {
         const { ViewersModal } = await import('./modals/viewers-modal.js');
         await ViewersModal.load();
     }
+};
+
+window.openBankAccountModal = async (id = null) => {
+    if (!app.requireSuperadmin()) return;
+    const { BankAccountModal } = await import('./modals/bank-account-modal.js');
+    await BankAccountModal.open(id);
+};
+
+window.editBankAccount = async (id) => {
+    if (!app.requireSuperadmin()) return;
+    const { BankAccountModal } = await import('./modals/bank-account-modal.js');
+    await BankAccountModal.open(id);
+};
+
+window.deleteBankAccount = async (id) => {
+    if (!app.requireSuperadmin()) return;
+    const account = BankAccountsView.accounts.find(a => a.id === id);
+    if (!account || !confirm(`Hapus rekening ${account.account_name}?`)) return;
+    try {
+        Loader.show('Menghapus...');
+        const { BankAccountService } = await import('./services/bank-account-service.js');
+        await BankAccountService.delete(id);
+        toast('Rekening dihapus 💕', 'success');
+        await BankAccountsView.load();
+        Loader.hide();
+    } catch (err) { toast('Gagal: ' + err.message, 'error'); Loader.hide(); }
 };
 
 setInterval(() => {
