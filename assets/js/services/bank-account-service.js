@@ -23,11 +23,23 @@ export const BankAccountService = {
         return data || [];
     },
 
+    async getActiveAccounts() {
+        const supabase = getSupabase();
+        const { data, error } = await supabase
+            .from('bank_accounts')
+            .select('*')
+            .eq('is_active', true)
+            .order('is_primary', { ascending: false })
+            .order('account_name', { ascending: true });
+        
+        if (error) throw error;
+        return data || [];
+    },
+
     async create(payload) {
         await this._checkSuperadmin();
         const supabase = getSupabase();
         
-        // Jika primary, reset other primaries
         if (payload.is_primary) {
             await supabase.from('bank_accounts').update({ is_primary: false }).neq('id', '00000000-0000-0000-0000-000000000000');
         }
@@ -46,7 +58,6 @@ export const BankAccountService = {
         await this._checkSuperadmin();
         const supabase = getSupabase();
         
-        // Jika primary, reset other primaries
         if (payload.is_primary) {
             await supabase.from('bank_accounts').update({ is_primary: false }).neq('id', id);
         }
@@ -78,5 +89,22 @@ export const BankAccountService = {
         
         if (error) throw error;
         return data || [];
+    },
+
+    /**
+     * Find matching account berdasarkan bank + nomor
+     */
+    async findMatching(bankName, accountNumber) {
+        const supabase = getSupabase();
+        const { data, error } = await supabase
+            .from('bank_accounts')
+            .select('*')
+            .ilike('bank_name', bankName)
+            .eq('account_number', accountNumber)
+            .eq('is_active', true)
+            .maybeSingle();
+        
+        if (error) return null;
+        return data;
     }
 };
