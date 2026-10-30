@@ -30,7 +30,7 @@
           <div class="pin-info-title">💡 Informasi Akses</div>
           <div class="pin-info-row">
             <span class="pin-badge pin-badge-sa">👑 Superadmin</span>
-            <span>PIN <b>UnPublish</b></span>
+            <span>PIN <b>2000</b></span>
           </div>
           <div class="pin-info-row">
             <span class="pin-badge pin-badge-viewer">👁️ Viewer</span>
@@ -64,12 +64,14 @@
       </div>
     </div>
 
+    <!-- VIEW: SUMMARY -->
     <div id="viewSummary" class="view-container">
       <div id="summaryTotal" class="summary-total"></div>
       <h2 class="section-title">📅 Pilih Periode</h2>
       <div id="periodList" class="card-grid"></div>
     </div>
 
+    <!-- VIEW: PERIOD -->
     <div id="viewPeriod" class="hidden view-container">
       <div id="breadcrumbPeriod" class="breadcrumb"></div>
       <div class="view-toolbar">
@@ -82,7 +84,7 @@
       <div id="schoolList" class="card-grid"></div>
     </div>
 
-    <!-- DETAIL VIEW dengan SWIPE NAVIGATION -->
+    <!-- VIEW: DETAIL dengan SWIPE -->
     <div id="viewDetail" class="hidden view-container detail-view-wrapper">
       <div id="breadcrumbDetail" class="breadcrumb"></div>
       <div class="view-toolbar">
@@ -91,9 +93,8 @@
         </button>
       </div>
 
-      <!-- NAVIGATION CONTROLS (Prev/Next + Counter) -->
       <div class="detail-nav-bar">
-        <button class="nav-arrow nav-arrow-prev" data-action="nav-prev" title="Sekolah Sebelumnya (←)">
+        <button class="nav-arrow nav-arrow-prev" data-action="nav-prev" title="Sebelumnya (←)">
           <span class="nav-arrow-icon">‹</span>
           <span class="nav-arrow-label">Sebelumnya</span>
         </button>
@@ -103,16 +104,14 @@
           <span class="nav-counter-total" id="navCounterTotal">1</span>
           <span class="nav-counter-hint">💡 Geser atau gunakan ← →</span>
         </div>
-        <button class="nav-arrow nav-arrow-next" data-action="nav-next" title="Sekolah Berikutnya (→)">
+        <button class="nav-arrow nav-arrow-next" data-action="nav-next" title="Berikutnya (→)">
           <span class="nav-arrow-label">Berikutnya</span>
           <span class="nav-arrow-icon">›</span>
         </button>
       </div>
 
-      <!-- PROGRESS DOTS -->
       <div class="nav-dots" id="navDots"></div>
 
-      <!-- SWIPE CONTAINER -->
       <div class="detail-swipe-area" id="detailSwipeArea">
         <div class="detail-header">
           <div>
@@ -137,6 +136,75 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- VIEW: BANK ACCOUNTS (BARU) -->
+    <div id="viewBankAccounts" class="hidden view-container">
+      <div class="breadcrumb">
+        <a data-action="show-summary">🏠 Summary</a>
+        <span class="sep">›</span>
+        <span class="current">💳 Daftar Rekening</span>
+      </div>
+      
+      <div class="bank-accounts-header">
+        <div>
+          <h2 class="bank-accounts-title">💳 Daftar Rekening</h2>
+          <p class="bank-accounts-subtitle">Kelola semua rekening bank & e-wallet</p>
+        </div>
+        <button class="btn btn-primary" data-action="open-bank-account-modal" id="addBankAccountBtn">
+          ➕ Tambah Rekening
+        </button>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="bank-stats" id="bankStats"></div>
+
+      <!-- TOOLBAR -->
+      <div class="bank-toolbar">
+        <div class="bank-search-wrapper">
+          <span class="bank-search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="bankSearch" 
+            class="bank-search" 
+            placeholder="Cari nama, bank, atau nomor rekening..."
+            autocomplete="off"
+          >
+          <button class="bank-search-clear hidden" data-action="clear-bank-search" id="bankSearchClear">✕</button>
+        </div>
+        
+        <div class="bank-filters">
+          <select id="bankTypeFilter" class="bank-filter-select">
+            <option value="">Semua Tipe</option>
+            <option value="personal">👤 Pribadi</option>
+            <option value="school">🏫 Sekolah</option>
+            <option value="operational">🏢 Operasional</option>
+            <option value="vendor">🛒 Vendor</option>
+            <option value="ewallet">📱 E-Wallet</option>
+          </select>
+          
+          <select id="bankStatusFilter" class="bank-filter-select">
+            <option value="">Semua Status</option>
+            <option value="active">✅ Aktif</option>
+            <option value="inactive">⛔ Nonaktif</option>
+          </select>
+        </div>
+
+        <div class="bank-view-toggle">
+          <button class="view-toggle-btn active" data-action="set-bank-view" data-view="table" title="Tampilan Tabel">
+            <span>📋</span>
+          </button>
+          <button class="view-toggle-btn" data-action="set-bank-view" data-view="grid" title="Tampilan Grid">
+            <span>⊞</span>
+          </button>
+          <button class="view-toggle-btn" data-action="set-bank-view" data-view="cards" title="Tampilan Kartu">
+            <span>▤</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div id="bankAccountsList" class="bank-accounts-content"></div>
     </div>
 
   </div>
@@ -179,7 +247,7 @@
     </div>
   </div>
 
-  <!-- SCHOOL MODAL - TANPA INPUT NO. URUT (AUTO) -->
+  <!-- SCHOOL MODAL -->
   <div id="schoolModal" class="modal-overlay">
     <div class="modal-form">
       <h3>
@@ -237,6 +305,78 @@
     </div>
   </div>
 
+  <!-- BANK ACCOUNT MODAL (BARU) -->
+  <div id="bankAccountModal" class="modal-overlay">
+    <div class="modal-form">
+      <h3>
+        <span id="bankAccountModalTitle">➕ Tambah Rekening</span>
+        <button class="btn btn-icon delete" data-action="close-modal" data-modal="bankAccountModal">✕</button>
+      </h3>
+      <form data-form="bank-account">
+        <input type="hidden" id="bankAccountId">
+        
+        <div class="form-group">
+          <label>Nama Pemilik <span class="required">*</span></label>
+          <input type="text" id="bankAccountName" required placeholder="Budi Santoso / PT. ABC">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bank / E-Wallet <span class="required">*</span></label>
+            <input type="text" id="bankAccountBank" required placeholder="BCA / Mandiri / DANA / OVO">
+          </div>
+          <div class="form-group">
+            <label>Nomor Rekening / HP <span class="required">*</span></label>
+            <input type="text" id="bankAccountNumber" required placeholder="1234567890">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipe Rekening <span class="required">*</span></label>
+            <select id="bankAccountType" required>
+              <option value="personal">👤 Pribadi</option>
+              <option value="school">🏫 Sekolah</option>
+              <option value="operational">🏢 Operasional</option>
+              <option value="vendor">🛒 Vendor</option>
+              <option value="ewallet">📱 E-Wallet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cabang <small>(opsional)</small></label>
+            <input type="text" id="bankAccountBranch" placeholder="KCP Sudirman">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Link ke Sekolah <small>(opsional - untuk rekening milik sekolah)</small></label>
+          <select id="bankAccountSchool">
+            <option value="">-- Tidak ada --</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Catatan</label>
+          <textarea id="bankAccountNotes" placeholder="Catatan tambahan (opsional)"></textarea>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" id="bankAccountActive" checked><span>Aktif</span></label>
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" id="bankAccountPrimary"><span>⭐ Rekening Utama</span></label>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="bankAccountModal">Batal</button>
+          <button type="submit" class="btn btn-primary">💾 Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- VIEWERS MODAL -->
   <div id="viewersModal" class="modal-overlay">
     <div class="modal-form modal-large">
@@ -266,7 +406,7 @@
   <!-- PIN DISPLAY MODAL -->
   <div id="pinDisplayModal" class="modal-overlay">
     <div class="modal-form pin-display-card">
-      <div class="pin-display-icon" id="pinDisplayIcon">✅</div>
+      <div class="pin-display-icon">✅</div>
       <h3 id="pinDisplayTitle">PIN Berhasil Dibuat!</h3>
       <p id="pinDisplaySubtitle" class="pin-display-subtitle">Berikan PIN ini kepada viewer:</p>
       <div class="pin-display-value" id="pinDisplayValue">0000</div>
